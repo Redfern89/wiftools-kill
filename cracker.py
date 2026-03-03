@@ -15,7 +15,7 @@ import target
 import wifiman 
 
 from PyQt5.QtWidgets import (
-	QLabel, QMainWindow, QTableView, QVBoxLayout, QHBoxLayout, QPushButton, 
+	QAbstractItemView, QLabel, QMainWindow, QTableView, QVBoxLayout, QHBoxLayout, QPushButton, 
 	QMessageBox, QApplication, QWidget, QStyledItemDelegate, QStyleOptionProgressBar, QStyle, QStatusBar, QDialog
 )
 from PyQt5.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QIcon, QPainter
@@ -98,6 +98,9 @@ class StationsTable(QWidget):
 		self.table.verticalHeader().setVisible(False)
 		self.table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
 		self.table.setIconSize(QSize(32, 32))
+
+		self.table.setSelectionMode(QAbstractItemView.NoSelection)
+		self.table.setFocusPolicy(Qt.NoFocus)
 		
 		self.progress_delegate = ProgressBarDelegate(self.table)
 		self.table.setItemDelegateForColumn(1, self.progress_delegate)
@@ -164,38 +167,6 @@ class BSSIDDelegate(QStyledItemDelegate):
 		ssid = index.data(Qt.UserRole +1)
 		item_type = index.data(Qt.UserRole)
 
-		if item_type == 'STA_ITEM':
-			painter.save()
-			#data = json.loads(index.data(Qt.UserRole +1))
-			data = index.data(Qt.UserRole +1)
-			icon = QIcon('icons/signal.png')
-			icon.paint(painter, option.rect.adjusted(20, 4, -4, -4), Qt.AlignLeft | Qt.AlignVCenter)
-
-			if option.state & QStyle.State_Selected:
-				painter.setPen(Qt.white)
-			else:
-				painter.setPen(Qt.black)
-
-			padding = 3
-			bar_rect = option.rect.adjusted(200, padding, -padding-300, -padding)
-			progress_option = QStyleOptionProgressBar()
-			#progress_option.setStyleSheet("QProgressBar {border: 2px solid grey; border-radius: 5px; text-align: center;}")
-			progress_option.rect = bar_rect
-			progress_option.minimum = 0
-			progress_option.maximum = 100
-			progress_option.progress = int(scale_rssi(data.get('station_dBm_AntSignal', -90), -85, -40, 0, 100))
-			progress_option.text = f"{data.get('station_dBm_AntSignal', -90)} dBm"
-			progress_option.textVisible = True
-			progress_option.textAlignment = Qt.AlignCenter
-
-
-			painter.setRenderHint(QPainter.Antialiasing)
-			option.widget.style().drawControl(QStyle.CE_ProgressBar , progress_option, painter)
-
-			mac = index.data(Qt.UserRole +3)
-			painter.drawText(option.rect.adjusted(45, -3, 0, 0), Qt.AlignLeft | Qt.AlignVCenter, mac)
-			painter.restore()
-
 		if bssid and item_type == 'AP_ITEM': # Только для основных строк с BSSID
 			painter.save()
 			icon = index.data(Qt.DecorationRole)
@@ -214,8 +185,17 @@ class BSSIDDelegate(QStyledItemDelegate):
 			ssid_font.setBold(True)
 			if ssid == '<Hidden>':
 				painter.setPen(Qt.red)
-			painter.setFont(ssid_font)
-			painter.drawText(ssid_rect, Qt.AlignLeft | Qt.AlignVCenter, ssid)
+				ssid_font.setUnderline(True)
+				painter.setFont(ssid_font)
+				pending_icon = QIcon('icons/pending.png')
+				icon_size = 16
+				ssid_rect = option.rect.adjusted(60, -22, 0, 0)
+				icon_rect = QRect(option.rect.left() + 40, option.rect.top()+2, icon_size, icon_size)
+				pending_icon.paint(painter, icon_rect, Qt.AlignLeft | Qt.AlignVCenter)
+				painter.drawText(ssid_rect, Qt.AlignLeft | Qt.AlignVCenter, ssid)
+			else:
+				painter.setFont(ssid_font)
+				painter.drawText(ssid_rect, Qt.AlignLeft | Qt.AlignVCenter, ssid)
 
 			bssid_font = QFont(option.font)
 			bssid_font.setPointSize(bssid_font.pointSize() - 2)
@@ -653,6 +633,7 @@ class WiFiManager(QMainWindow):
 			channel = channel_present.get('channel', 0) if channel_present else 0
 			channel_flags = channel_present.get('flags', 0) if channel_present else 'None'
 			rssi = wifi_pkt.return_RadioTap_PresentFlag('dbm_Antenna_Signal') or -100
+			rate = wifi_pkt.return_RadioTap_PresentFlag('Rate') or 0
 
 			type_subtype = wifi_pkt.return_Dot11_frame_control()
 			dot11frame = wifi_pkt.return_Dot11()
@@ -668,7 +649,6 @@ class WiFiManager(QMainWindow):
 					to_ds       = 'to_ds' in flag_names
 					from_ds     = 'from_ds' in flag_names
 					is_direct   = False
-					direct_type = ""
 					ap_addr     = None
 					client_addr = None
 					
@@ -680,11 +660,9 @@ class WiFiManager(QMainWindow):
 						is_direct = dot11frame.addr1[:8] != '33:33:00' and is_direct # Исключаем IPv6 multicast
 						ap_addr = dot11frame.addr2 or dot11frame.addr3
 						client_addr = dot11frame.addr1
-						direct_type = "AP -> Client"
 					elif to_ds:
 						#is_direct = (dot11frame.addr1 == dot11frame.addr3)
 						is_direct = dot11frame.addr3 != 'ff:ff:ff:ff:ff:ff'# and is_direct # Исключаем широковещательные
-						direct_type = "Client -> AP"
 						ap_addr = dot11frame.addr1 or dot11frame.addr3
 						client_addr = dot11frame.addr2
 
@@ -696,10 +674,10 @@ class WiFiManager(QMainWindow):
 							if DEBUG:
 								print(f"[+] Detected client on {ap_addr} -> {client_addr}")
 							client = {
-								'station_MAC': client_addr,
+								'station_MAC': self.vendor_oui.get_mac_vendor_mixed(client_addr),
 								'station_dBm_AntSignal': rssi,
 								'frames': 1,
-								'station_Rate': 'Unknown',
+								'station_Rate': rate,
 								'station_ChannelFlags': channel_flags
 							}
 							self.found_sta_cnt += 1
@@ -707,16 +685,10 @@ class WiFiManager(QMainWindow):
 							self.access_points[ap_addr]['clients'][client_addr] = client
 							self.safe_update_sta_data(ap_addr, json.dumps(client))
 						else:
-							frames = self.access_points[ap_addr]['clients'][client_addr]['frames']
+							client = self.access_points[ap_addr]['clients'][client_addr]
+							frames = client['frames']
 							frames += 1
 							self.access_points[ap_addr]['clients'][client_addr]['frames'] = frames
-							client = {
-								'station_MAC': client_addr,
-								'station_dBm_AntSignal': rssi,
-								'frames': frames,
-								'station_Rate': 'Unknown',
-								'station_ChannelFlags': channel_flags
-							}
 							self.safe_update_sta_data(ap_addr, json.dumps(client))
 						
 			beacon = wifi_pkt.return_Dot11_Beacon_ProbeResponse()

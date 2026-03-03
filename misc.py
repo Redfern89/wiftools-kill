@@ -61,9 +61,10 @@ class WiFiHelper:
 			for e in elt:
 				if e.ID == 221:
 					for ven in self.vendors_oui:
-						if e.INFO.oui == ven:
-							vendor = self.vendors_oui.get(ven, "Unknown")
-							return vendor
+						if hasattr(e.INFO, 'oui'):
+							if e.INFO.oui == ven:
+								vendor = self.vendors_oui.get(ven, "Unknown")
+								return vendor
 		return "Unknown"
 	
 
