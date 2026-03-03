@@ -506,7 +506,7 @@ class WiFiManager(QMainWindow):
 				sub_row = [QStandardItem("") for _ in range(self.model.columnCount())]
 				sub_row[0] = subitem
 				self.model.insertRow(row + 1, sub_row)
-				self.table.setSpan(row + 1, 0, 1, 8)
+				self.table.setSpan(row + 1, 0, 1, 6)
 				subitem_index = self.model.index(row + 1, 0)
 				stations_table = StationsTable(self)
 				stations_table.set_ssid(ssid)
@@ -698,20 +698,22 @@ class WiFiManager(QMainWindow):
 							client = {
 								'station_MAC': client_addr,
 								'station_dBm_AntSignal': rssi,
-								'frmaes': 0,
+								'frames': 1,
 								'station_Rate': 'Unknown',
 								'station_ChannelFlags': channel_flags
 							}
 							self.found_sta_cnt += 1
 							self.safe_update_label(self.networksLabel, f"Networks: {self.found_ap_cnt} [{self.found_sta_cnt}]")
-							self.access_points[ap_addr]['clients'].append(client_addr)
+							self.access_points[ap_addr]['clients'][client_addr] = client
 							self.safe_update_sta_data(ap_addr, json.dumps(client))
 						else:
-							#print(self.access_points[ap_addr]['clients'])
+							frames = self.access_points[ap_addr]['clients'][client_addr]['frames']
+							frames += 1
+							self.access_points[ap_addr]['clients'][client_addr]['frames'] = frames
 							client = {
 								'station_MAC': client_addr,
 								'station_dBm_AntSignal': rssi,
-								'frames': 0,
+								'frames': frames,
 								'station_Rate': 'Unknown',
 								'station_ChannelFlags': channel_flags
 							}
@@ -749,7 +751,7 @@ class WiFiManager(QMainWindow):
 						"encryption": enc_type,
 						"cipher": unicast_pair_suites,
 						"akm": akm_suites,
-						"clients": []
+						"clients": {}
 					}
 					self.found_ap_cnt += 1
 					self.access_points[bssid] = ap_info
