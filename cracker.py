@@ -46,7 +46,6 @@ class ProgressBarDelegate(QStyledItemDelegate):
 			if option.state & QStyle.State_Selected:
 				painter.fillRect(option.rect, option.palette.highlight())
 			
-			
 			progress_option = QStyleOptionProgressBar()
 			#progress_option.setStyleSheet("QProgressBar {border: 2px solid grey; border-radius: 5px; text-align: center;}")
 			progress_option.rect = bar_rect
