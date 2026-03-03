@@ -97,12 +97,11 @@ class WiFiHelper:
 
 		# 2. Если ничего современного не нашли — смотрим Capabilities
 		if not enc_type:
-			capabilities = beacon.get('capabilities', {})
-			# Если есть Privacy — это WEP, иначе OPEN
-			if 'Privacy' in capabilities.values():
-				enc_type = ['WEP']
-			else:
-				enc_type = ['OPEN']
+			for c in beacon.capabilities:
+				if c.name == 'Privacy':
+					enc_type = ['WEP']
+				else:
+					enc_type = ['OPEN']
 
 		return enc_type, unicast_pair_suites, akm_suites
 

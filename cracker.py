@@ -28,6 +28,66 @@ DEBUG = True
 def scale_rssi(rssi_value, min_rssi=-90, max_rssi=-40, new_min=0, new_max=100):
 	return max(new_min, min(new_max, (rssi_value - min_rssi) * (new_max - new_min) / (max_rssi - min_rssi) + new_min))
 
+class StationsTable(QWidget):
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		layout = QVBoxLayout(self)
+		layout.setContentsMargins(35, 5, 5, 5)
+		
+		top_layout = QHBoxLayout()
+		top_layout.setContentsMargins(0, 0, 0, 0)
+		
+		self.assocIconLabel = QLabel()
+		self.assocIconLabel.setPixmap(QPixmap('icons/satellite-dish.png').scaled(24, 24, Qt.KeepAspectRatio))
+		self.assocIconLabel.setFixedWidth(24)
+		
+		assocLabelFont = QFont()
+		assocLabelFont.setBold(True)
+		assocLabelFont.setPointSize(12)
+		self.assocLabel = QLabel('Associated stations:')
+		self.assocLabel.setFont(assocLabelFont)
+		
+		self.table = QTableView(self)
+		self.model = QStandardItemModel(0, 5, self)
+		self.model.setHorizontalHeaderLabels(['MAC', 'RSSI', 'Frames', 'Rate', 'Modulation'])
+
+		self.table.setModel(self.model)
+		self.table.horizontalHeader().setStretchLastSection(True)
+		self.table.setEditTriggers(QTableView.NoEditTriggers)
+		self.table.setShowGrid(False)
+		self.table.verticalHeader().setVisible(False)
+		self.table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+		self.table.setIconSize(QSize(32, 32))
+		
+		self.progress_delegate = ProgressBarDelegate(self.table)
+		self.table.setItemDelegateForColumn(1, self.progress_delegate)
+
+		self.table.setColumnWidth(0, 170)
+		self.table.setColumnWidth(1, 300)
+		self.table.setColumnWidth(4, 55)
+		self.table.setColumnWidth(5, 80)
+		
+		top_layout.addWidget(self.assocIconLabel)
+		top_layout.addWidget(self.assocLabel)
+		layout.addLayout(top_layout)
+		layout.addWidget(self.table)
+		self.setLayout(layout)
+
+	def update_data(self, ssid, stations):
+		self.model.setRowCount(0)
+		
+		self.assocLabel.setText(f'Associated stations for "{ssid}":')
+		
+		for station in stations:
+			first_item = QStandardItem(QIcon('icons/signal.png'), str(station.get('station_MAC', "")))
+			row = [first_item]
+			for col in ['station_dBm_AntSignal', 'station_Frames', 'station_Rate', 'station_ChannelFlags']:
+				row.append(QStandardItem(str(station.get(col, ""))))
+			self.model.appendRow(row)
+			
+			row_number = self.model.rowCount() -1
+			self.table.setRowHeight(row_number, 40)
+
 class ProgressBarDelegate(QStyledItemDelegate):
 	def __init__(self, parent=None):
 		super().__init__(parent)
@@ -125,6 +185,8 @@ class BSSIDDelegate(QStyledItemDelegate):
 			ssid_rect = option.rect.adjusted(40, -22, 0, 0)
 			ssid_font = QFont(option.font)
 			ssid_font.setBold(True)
+			if ssid == '<Hidden>':
+				painter.setPen(Qt.red)
 			painter.setFont(ssid_font)
 			painter.drawText(ssid_rect, Qt.AlignLeft | Qt.AlignVCenter, ssid)
 
@@ -408,6 +470,19 @@ class WiFiManager(QMainWindow):
 			item.setData(sta_data.get('station_MAC', ''), Qt.UserRole + 4)
 			self.model.insertRow(row + 1, [item])
 			self.table.setSpan(row + 1, 0, 1, 4)
+			'''subitem = QStandardItem("")
+			sub_row = [QStandardItem("") for _ in range(self.model.columnCount())]
+			sub_row[0] = subitem
+			self.model.insertRow(row + 1, sub_row)
+			self.table.setSpan(row + 1, 0, 1, 8)
+			subitem_index = self.model.index(row + 1, 0)
+			stations_table = StationsTable(self)
+			#stations_table.update_data(ssid, stations)
+			
+			self.table.setIndexWidget(subitem_index, stations_table)
+			self.table.setRowHeight(row +1, 103)
+			
+			self.table.viewport().update()'''
 
 	@pyqtSlot(str, str)
 	def __update_sta_data(self, sta_mac, data):
@@ -519,21 +594,21 @@ class WiFiManager(QMainWindow):
 		
 	def start_monitoring(self, iface):
 		def run():
-			try:
-				pHandle = pcap.pcap(name=iface, promisc=True, immediate=True, timeout_ms=100)
-				if DEBUG:
-					print(f"[*] Sniffing on {iface}...")
-				self.safe_toggle_elem(self.btn_scan, False)
-				self.safe_toggle_elem(self.btn_stop, True)
-				self.safe_enbled_elem_toggle(self.btn_wifi, False)
-				self.safe_enbled_elem_toggle(self.btn_targ, False)
-				self.process_packets(pHandle)
+			#try:
+			pHandle = pcap.pcap(name=iface, promisc=True, immediate=True, timeout_ms=100)
+			if DEBUG:
+				print(f"[*] Sniffing on {iface}...")
+			self.safe_toggle_elem(self.btn_scan, False)
+			self.safe_toggle_elem(self.btn_stop, True)
+			self.safe_enbled_elem_toggle(self.btn_wifi, False)
+			self.safe_enbled_elem_toggle(self.btn_targ, False)
+			self.process_packets(pHandle)
 
-			except Exception as e:
-				if DEBUG:
-					print(f"[!] Failed to open interface {iface}: {e}")
-				self.running = False
-				self.safe_show_message("Error", str(e), QMessageBox.critical, QMessageBox.Ok)
+			#except Exception as e:
+			#	if DEBUG:
+			#		print(f"[!] Failed to open interface {iface}: {e}")
+			#	self.running = False
+			#	self.safe_show_message("Error", str(e), QMessageBox.critical, QMessageBox.Ok)
 
 		self.monitor_thread = threading.Thread(target=run, daemon=True)
 		self.monitor_thread.start()
@@ -586,25 +661,8 @@ class WiFiManager(QMainWindow):
 						client_addr = dot11frame.addr2
 
 					if is_direct:
-						label = "QoS Data" if type_subtype == 0x88 else "Data"
-						if not ap_addr in self.access_points:
-							if DEBUG:
-								print(f"[+] Detected AP: {ap_addr.upper()} ({direct_type}, {label})")
-							ap_info = {
-								"BSSID": ap_addr.upper(),
-								"SSID": "Unknown",
-								"channel": channel,
-								"vendor": "-",
-								"rssi": rssi,
-								"encryption": "-",
-								"cipher": "-",
-								"akm": "-",
-								"clients": []
-							}
-							self.found_ap_cnt += 1
-							self.access_points[ap_addr] = ap_info
-							self.safe_add_network(json.dumps(ap_info))
-							self.safe_update_label(self.networksLabel, f"Networks: {self.found_ap_cnt} [{self.found_sta_cnt}]")
+						if ap_addr not in self.access_points:
+							continue
 
 						if client_addr not in self.access_points[ap_addr]['clients']:
 							if DEBUG:
@@ -633,21 +691,16 @@ class WiFiManager(QMainWindow):
 				elt = wifi_pkt.return_Dot11Elt()
 				wifi_dot11 = wifi_pkt.return_Dot11()
 				bssid = wifi_dot11.addr3
+				wifi = WiFiHelper()
+				ssid = wifi.get_ap_ssid(wifi_pkt)
+				vendor = wifi.get_ap_vendor(wifi_pkt)
+				channel = wifi.get_ap_channel(wifi_pkt)
+				enc_type, unicast_pair_suites, akm_suites = wifi.return_ap_encryptions(beacon, elt)
+				akm_suites = ', '.join(akm_suites) if akm_suites else '-'
+				unicast_pair_suites = ', '.join(unicast_pair_suites) if unicast_pair_suites else '-'
+				enc_type = '/'.join(enc_type)
+				
 				if bssid in self.access_points:
-					wifi = WiFiHelper()
-					ssid = wifi.get_ap_ssid(wifi_pkt)
-					vendor = wifi.get_ap_vendor(wifi_pkt)
-					channel = wifi.get_ap_channel(wifi_pkt)
-					enc_type, unicast_pair_suites, akm_suites = wifi.return_ap_encryptions(beacon, elt)
-
-					akm_suites = ', '.join(akm_suites) if akm_suites else '-'
-					unicast_pair_suites = ', '.join(unicast_pair_suites) if unicast_pair_suites else '-'
-					enc_type = '/'.join(enc_type)
-
-					#if DEBUG:
-					#	print(f"[+] Received beacon frame from {bssid}, SSID=\"{ssid}\"")
-					# нахуй. срет в консоль ацки
-
 					self.safe_update_ap_role_by_bssid(bssid, 1, ssid)             # Обновляем SSID в UserRole +1
 					self.safe_update_ap_item_by_bssid(bssid, 1, str(channel))     # Обновляем канал
 					self.safe_update_ap_item_by_bssid(bssid, 2, str(vendor))      # Обновляем вендора
@@ -655,6 +708,21 @@ class WiFiManager(QMainWindow):
 					self.safe_update_ap_item_by_bssid(bssid, 4, str(enc_type))    # Обновляем тип шифрования
 					self.safe_update_ap_item_by_bssid(bssid, 5, str(unicast_pair_suites)) # Обновляем парные шифры
 					self.safe_update_ap_item_by_bssid(bssid, 6, str(akm_suites))  # Обновляем шифры аутентификации
+				else:
+					ap_info = {
+						"BSSID": bssid.upper(),
+						"SSID": ssid,
+						"channel": channel,
+						"vendor": vendor,
+						"rssi": rssi,
+						"encryption": enc_type,
+						"cipher": unicast_pair_suites,
+						"akm": akm_suites,
+						"clients": []
+					}
+					self.found_ap_cnt += 1
+					self.access_points[bssid] = ap_info
+					self.safe_add_network(json.dumps(ap_info))			
 
 
 if __name__ == "__main__":
