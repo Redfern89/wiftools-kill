@@ -28,6 +28,46 @@ DEBUG = True
 def scale_rssi(rssi_value, min_rssi=-90, max_rssi=-40, new_min=0, new_max=100):
 	return max(new_min, min(new_max, (rssi_value - min_rssi) * (new_max - new_min) / (max_rssi - min_rssi) + new_min))
 
+class ProgressBarDelegate(QStyledItemDelegate):
+	def __init__(self, parent=None):
+		super().__init__(parent)
+
+	def paint(self, painter, option, index):
+		if 1:
+			try:
+				rssi_value = int(index.data())
+			except ValueError:
+				return
+		
+			signal_strength = int(scale_rssi(rssi_value, -85, -40, 0, 100))
+			padding = 6
+			bar_rect = option.rect.adjusted(padding, padding, -padding, -padding)
+
+			if option.state & QStyle.State_Selected:
+				painter.fillRect(option.rect, option.palette.highlight())
+			
+			
+			progress_option = QStyleOptionProgressBar()
+			#progress_option.setStyleSheet("QProgressBar {border: 2px solid grey; border-radius: 5px; text-align: center;}")
+			progress_option.rect = bar_rect
+			progress_option.minimum = 0
+			progress_option.maximum = 100
+			progress_option.progress = signal_strength
+			progress_option.text = f"{rssi_value} dBm"
+			progress_option.textVisible = True
+			progress_option.textAlignment = Qt.AlignCenter
+
+			painter.save()
+			painter.setRenderHint(QPainter.Antialiasing)
+			option.widget.style().drawControl(QStyle.CE_ProgressBar , progress_option, painter)
+			#option.widget.style().drawControl(QStyle.CE_ProgressBar, progress_option, painter)
+			painter.restore()
+		else:
+			super().paint(painter, option, index)
+
+	def createEditor(self, parent, option, index):
+		return None
+	
 class StationsTable(QWidget):
 	def __init__(self, parent=None):
 		super().__init__(parent)
@@ -73,60 +113,47 @@ class StationsTable(QWidget):
 		layout.addWidget(self.table)
 		self.setLayout(layout)
 
-	def update_data(self, ssid, stations):
-		self.model.setRowCount(0)
-		
+	def find_row_by_bssid(self, bssid):
+		for row in range(self.model.rowCount()):
+			item = self.model.item(row, 0)
+			if item and item.data(Qt.DisplayRole) == bssid:
+				return row
+		return -1
+
+	def set_ssid(self, ssid):
 		self.assocLabel.setText(f'Associated stations for "{ssid}":')
+
+	def add_sta(self, sta_data):
+		sta_mac = sta_data.get('station_MAC', None)
+		if sta_mac:
+			row = self.find_row_by_bssid(sta_mac)
 		
-		for station in stations:
-			first_item = QStandardItem(QIcon('icons/signal.png'), str(station.get('station_MAC', "")))
-			row = [first_item]
-			for col in ['station_dBm_AntSignal', 'station_Frames', 'station_Rate', 'station_ChannelFlags']:
-				row.append(QStandardItem(str(station.get(col, ""))))
+		if row == -1:
+			for k, v in sta_data.items():
+				if k == 'station_MAC':
+					first_item = QStandardItem(QIcon('icons/signal.png'), str(v))
+					row = [first_item]
+				elif k == 'station_ChannelFlags':
+					channel_flags = '+'.join(v)
+					row.append(QStandardItem(channel_flags))
+				else:
+					row.append(QStandardItem(str(v)))
+		
 			self.model.appendRow(row)
-			
 			row_number = self.model.rowCount() -1
 			self.table.setRowHeight(row_number, 40)
-
-class ProgressBarDelegate(QStyledItemDelegate):
-	def __init__(self, parent=None):
-		super().__init__(parent)
-
-	def paint(self, painter, option, index):
-		if 1:
-			try:
-				rssi_value = int(index.data())
-			except ValueError:
-				return
 		
-			signal_strength = int(scale_rssi(rssi_value, -85, -40, 0, 100))
-			padding = 6
-			bar_rect = option.rect.adjusted(padding, padding, -padding, -padding)
-
-			if option.state & QStyle.State_Selected:
-				painter.fillRect(option.rect, option.palette.highlight())
-			
-			
-			progress_option = QStyleOptionProgressBar()
-			#progress_option.setStyleSheet("QProgressBar {border: 2px solid grey; border-radius: 5px; text-align: center;}")
-			progress_option.rect = bar_rect
-			progress_option.minimum = 0
-			progress_option.maximum = 100
-			progress_option.progress = signal_strength
-			progress_option.text = f"{rssi_value} dBm"
-			progress_option.textVisible = True
-			progress_option.textAlignment = Qt.AlignCenter
-
-			painter.save()
-			painter.setRenderHint(QPainter.Antialiasing)
-			option.widget.style().drawControl(QStyle.CE_ProgressBar , progress_option, painter)
-			#option.widget.style().drawControl(QStyle.CE_ProgressBar, progress_option, painter)
-			painter.restore()
 		else:
-			super().paint(painter, option, index)
+			for index, (k, v) in enumerate(sta_data.items()):
+				item = self.model.item(row, index)
+				if k == 'station_MAC':
+					continue
+				elif k == 'station_ChannelFlags':
+					channel_flags = '+'.join(v)
+					item.setText(channel_flags)
+				else:
+					item.setText(str(v))
 
-	def createEditor(self, parent, option, index):
-		return None
 
 class BSSIDDelegate(QStyledItemDelegate):
 	def __init__(self, parent=None):
@@ -419,6 +446,15 @@ class WiFiManager(QMainWindow):
 			if item and item.data(Qt.UserRole + role) == value:
 				return row
 		return -1
+	
+	def has_nested_exists(self, row):
+		for col in range(self.model.columnCount()):
+			index = self.model.index(row, col)
+			widget = self.table.indexWidget(index)
+			if isinstance(widget, QWidget):
+				return True
+		
+		return False
 
 	@pyqtSlot(object, str)
 	def __update_label(self, label, text):
@@ -459,37 +495,35 @@ class WiFiManager(QMainWindow):
 			self.model.item(row, item).setText(str(data))
 
 	@pyqtSlot(str, str)
-	def __add_sta_by_bssid(self, bssid, data):
+	def __update_sta_data(self, bssid, data):
 		sta_data = json.loads(data)
 		row = self.find_row_by_userrole(bssid.upper(), 2) # Ищем по UserRole +2, где хранится BSSID
 		if row != -1:
-			item = QStandardItem()
-			item.setData('STA_ITEM', Qt.UserRole)
-			item.setData(sta_data, Qt.UserRole +1)
-			item.setData(self.vendor_oui.get_mac_vendor_mixed(sta_data.get('station_MAC', '')), Qt.UserRole +3)
-			item.setData(sta_data.get('station_MAC', ''), Qt.UserRole + 4)
-			self.model.insertRow(row + 1, [item])
-			self.table.setSpan(row + 1, 0, 1, 4)
-			'''subitem = QStandardItem("")
-			sub_row = [QStandardItem("") for _ in range(self.model.columnCount())]
-			sub_row[0] = subitem
-			self.model.insertRow(row + 1, sub_row)
-			self.table.setSpan(row + 1, 0, 1, 8)
-			subitem_index = self.model.index(row + 1, 0)
-			stations_table = StationsTable(self)
-			#stations_table.update_data(ssid, stations)
-			
-			self.table.setIndexWidget(subitem_index, stations_table)
-			self.table.setRowHeight(row +1, 103)
-			
-			self.table.viewport().update()'''
-
-	@pyqtSlot(str, str)
-	def __update_sta_data(self, sta_mac, data):
-		station = json.loads(data)
-		row = self.find_row_by_userrole(sta_mac, 4)
-		if row != -1:
-			self.model.item(row, 0).setData(station, Qt.UserRole +1)
+			if not self.has_nested_exists(row +1):
+				first_item = self.model.item(row, 0)
+				ssid = first_item.data(Qt.UserRole +1)
+				subitem = QStandardItem("")
+				sub_row = [QStandardItem("") for _ in range(self.model.columnCount())]
+				sub_row[0] = subitem
+				self.model.insertRow(row + 1, sub_row)
+				self.table.setSpan(row + 1, 0, 1, 8)
+				subitem_index = self.model.index(row + 1, 0)
+				stations_table = StationsTable(self)
+				stations_table.set_ssid(ssid)
+				stations_table.add_sta(sta_data)
+				
+				self.table.setIndexWidget(subitem_index, stations_table)
+				self.table.setRowHeight(row +1, 103)
+				
+				self.table.viewport().update()
+			else:
+				subitem_index = self.model.index(row + 1, 0)
+				stations_table = self.table.indexWidget(subitem_index)
+				stations_table.add_sta(sta_data)
+				
+				num_rows = stations_table.model.rowCount()
+				new_height = max(75, ((num_rows * 40) + 64))
+				self.table.setRowHeight(row +1, new_height)
 
 	@pyqtSlot(object, bool)
 	def __toggle_elem(self, elem, visible):
@@ -528,12 +562,6 @@ class WiFiManager(QMainWindow):
 			Q_ARG(bool, enabled)
 		)
 
-	def safe_update_sta_data(self, sta_mac, data):
-		QMetaObject.invokeMethod(self, "__update_sta_data", Qt.QueuedConnection, 
-				Q_ARG("QString", sta_mac),
-				Q_ARG("QString", data)
-			)
-
 	def safe_update_ap_role_by_bssid(self, bssid, role, value):
 		QMetaObject.invokeMethod(self, "__update_ap_role_by_bssid", Qt.QueuedConnection, 
 			   Q_ARG("QString", bssid),
@@ -541,8 +569,8 @@ class WiFiManager(QMainWindow):
 			   Q_ARG("QString", value)
 			)
 
-	def safe_add_subitem_by_bssid(self, bssid, data):
-		QMetaObject.invokeMethod(self, "__add_sta_by_bssid", Qt.QueuedConnection, 
+	def safe_update_sta_data(self, bssid, data):
+		QMetaObject.invokeMethod(self, "__update_sta_data", Qt.QueuedConnection, 
 			   Q_ARG("QString", bssid),
 			   Q_ARG("QString", data)
 			)
@@ -670,21 +698,24 @@ class WiFiManager(QMainWindow):
 							client = {
 								'station_MAC': client_addr,
 								'station_dBm_AntSignal': rssi,
+								'frmaes': 0,
 								'station_Rate': 'Unknown',
 								'station_ChannelFlags': channel_flags
 							}
 							self.found_sta_cnt += 1
 							self.safe_update_label(self.networksLabel, f"Networks: {self.found_ap_cnt} [{self.found_sta_cnt}]")
 							self.access_points[ap_addr]['clients'].append(client_addr)
-							self.safe_add_subitem_by_bssid(ap_addr, json.dumps(client))
+							self.safe_update_sta_data(ap_addr, json.dumps(client))
 						else:
+							#print(self.access_points[ap_addr]['clients'])
 							client = {
 								'station_MAC': client_addr,
 								'station_dBm_AntSignal': rssi,
+								'frames': 0,
 								'station_Rate': 'Unknown',
 								'station_ChannelFlags': channel_flags
 							}
-							self.safe_update_sta_data(client_addr, json.dumps(client))
+							self.safe_update_sta_data(ap_addr, json.dumps(client))
 						
 			beacon = wifi_pkt.return_Dot11_Beacon_ProbeResponse()
 			if beacon:
