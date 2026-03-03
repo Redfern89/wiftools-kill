@@ -1161,7 +1161,7 @@ class Dot11EltParsers(IEEE80211_DEFS, IEEE80211_Utils):
 		return result
 
 	def vendor_specific(self, vendor_specific):
-		if len(self.vendor_specific) < 4:
+		if len(vendor_specific) < 4:
 			return
 		
 		vendor_oui = vendor_specific[:3]
