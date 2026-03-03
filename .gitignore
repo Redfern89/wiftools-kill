@@ -1,0 +1,4 @@
+*.pcap
+*.pyc
+*.json
+__pycache__/
