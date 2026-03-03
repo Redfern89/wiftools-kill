@@ -218,6 +218,7 @@ class WiFiManager(QMainWindow):
 		self.running = False
 
 		self.setWindowTitle("WiFi Cracker")
+		self.setWindowIcon(QIcon('icons/satellite-dish.png'))
 		self.setGeometry(*self._center_window(1120, 520))
 		self.central_widget = QWidget()
 		self.setCentralWidget(self.central_widget)
