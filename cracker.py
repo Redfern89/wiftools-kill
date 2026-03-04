@@ -138,6 +138,8 @@ class StationsTable(QWidget):
 				elif k == 'station_ChannelFlags':
 					channel_flags = '+'.join(v)
 					row.append(QStandardItem(channel_flags))
+				elif k == 'station_Rate':
+					row.append(QStandardItem(f'{v} MB/s'))
 				else:
 					row.append(QStandardItem(str(v)))
 		
@@ -153,6 +155,8 @@ class StationsTable(QWidget):
 				elif k == 'station_ChannelFlags':
 					channel_flags = '+'.join(v)
 					item.setText(channel_flags)
+				elif k == 'station_Rate':
+					item.setText(f'{v} MB/s')
 				else:
 					item.setText(str(v))
 
@@ -638,6 +642,16 @@ class WiFiManager(QMainWindow):
 			type_subtype = wifi_pkt.return_Dot11_frame_control()
 			dot11frame = wifi_pkt.return_Dot11()
 
+			if type_subtype == 0x94: # Block ACK req
+				if dot11frame.addr2 in self.access_points:
+					if dot11frame.addr1 in self.access_points[dot11frame.addr2]['clients']:
+						client = self.access_points[dot11frame.addr2]['clients'][dot11frame.addr1]
+						client['station_ChannelFlags'] = channel_flags
+						client['station_Rate'] = rate
+						self.access_points[dot11frame.addr2]['clients'][dot11frame.addr1] = client
+
+						self.safe_update_sta_data(dot11frame.addr2, json.dumps(client))						
+
 			if type_subtype in [0x08, 0x88]: # Data, QoS Data
 				fc_flags = wifi_pkt.return_dot11_framecontrol_flags()
 				flag_names = {f.name for f in fc_flags} # Делаем set для скорости
@@ -688,7 +702,7 @@ class WiFiManager(QMainWindow):
 							client = self.access_points[ap_addr]['clients'][client_addr]
 							frames = client['frames']
 							frames += 1
-							self.access_points[ap_addr]['clients'][client_addr]['frames'] = frames
+							self.access_points[ap_addr]['clients'][client_addr] = client
 							self.safe_update_sta_data(ap_addr, json.dumps(client))
 						
 			beacon = wifi_pkt.return_Dot11_Beacon_ProbeResponse()

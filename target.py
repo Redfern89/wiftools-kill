@@ -662,7 +662,7 @@ class DeauthDialog(QDialog):
 					self.stations[dot11.addr1]['acks'] = acks
 					self.safe_update_sta(dot11.addr1)
 
-			if type_subtype == 0x94: # Blcok ACK req
+			if type_subtype == 0x94: # Block ACK req
 				if dot11.addr1 in self.stations:
 					self.stations[dot11.addr1]['channel_flags'] = channel_flags
 					self.stations[dot11.addr1]['rate'] = rate
