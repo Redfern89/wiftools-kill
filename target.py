@@ -639,6 +639,9 @@ class DeauthDialog(QDialog):
 		for ts, pkt in pHandle:
 			if not self.running:
 				break
+			
+			if len(pkt) < 12:
+				continue
 
 			wifi_pkt = Dot11Parser(pkt)
 			rssi = wifi_pkt.return_RadioTap_PresentFlag('dbm_Antenna_Signal') or -100

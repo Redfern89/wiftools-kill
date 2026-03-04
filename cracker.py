@@ -328,6 +328,19 @@ class WiFiManager(QMainWindow):
 		self.workTimer.setInterval(1000)
 		self.workTimer.timeout.connect(self.on_work_timer)
 
+	def closeEvent(self, event):
+		try:
+			if self.running:
+				self.running = False
+				if self.monitor_thread.is_alive():
+					self.monitor_thread.join()
+				if self.hopper_thread.is_alive():
+					self.hopper_thread.join()
+		finally:
+			if DEBUG:
+				print("[+] Done!")
+			event.accept()
+
 	def init_work_timer(self):
 		self.work_sec = 0
 		self.work_min = 0
@@ -610,6 +623,7 @@ class WiFiManager(QMainWindow):
 			pHandle = pcap.pcap(name=iface, promisc=True, immediate=True, timeout_ms=100)
 			if DEBUG:
 				print(f"[*] Sniffing on {iface}...")
+	
 			self.safe_toggle_elem(self.btn_scan, False)
 			self.safe_toggle_elem(self.btn_stop, True)
 			self.safe_enbled_elem_toggle(self.btn_wifi, False)
@@ -627,6 +641,9 @@ class WiFiManager(QMainWindow):
 
 	def process_packets(self, pHandle):
 		for ts, pkt in pHandle:
+			if len(pkt) < 12:
+				continue
+
 			if not self.running:
 				if DEBUG:
 					print("[+] pcap stopped")
