@@ -64,6 +64,23 @@ porbe_resp_raw = \
 	b"\x0c\x43\x00\x00\x00\x00"
 
 
+eapol_raw = \
+	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x0c\x6c\x09\xc0\x00\xeb\x01" \
+	b"\x00\x00\x88\x02\xc4\x04\x06\x98\xd2\xcc\x98\x89\x40\x3f\x8c\x93" \
+	b"\x04\x90\x40\x3f\x8c\x93\x04\x90\x10\x00\x07\x00\xaa\xaa\x03\x00" \
+	b"\x00\x00\x88\x8e\x02\x03\x00\x97\x02\x13\xca\x00\x10\x00\x00\x00" \
+	b"\x00\x00\x00\x00\x02\xb1\xec\xd7\x10\xac\xe4\x6c\xe8\x48\xca\x9d" \
+	b"\x1a\x4f\x43\x79\x50\x02\x10\x46\xfd\x74\xa9\x68\xbc\x7e\x89\x6f" \
+	b"\x6a\x88\x13\x25\x16\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
+	b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
+	b"\x00\x00\x00\x00\x00\x06\x0a\xae\x0c\x2c\x5f\x6d\x4b\x72\x34\x20" \
+	b"\xc9\xc3\x63\x34\xd2\x00\x38\xa7\x6b\x79\xf4\x79\xb2\x18\x28\xc4" \
+	b"\xde\x30\xca\x33\x27\xbd\x37\x90\xd0\xe4\x14\x27\x8f\xb2\xd9\x2b" \
+	b"\xfe\xdc\x78\x26\x4b\xca\x8b\xea\x38\x8d\xac\xab\xea\x28\xa6\x79" \
+	b"\xd7\x49\x79\x1d\x8d\x77\x9b\x41\xcf\xe2\xd3\x0d\x75\x21\x19"
+
+
+
 __rt_presents = ['TSFT', 'Flags', 'Rate', 'Channel', 'FHSS', 'dBm_AntSignal',
 			   'dBm_AntNoise', 'Lock_Quality', 'TX_Attenuation',
 			   'dB_TX_Attenuation', 'dBm_TX_Power', 'Antenna',
@@ -600,6 +617,36 @@ class DOT11_SUPPORTED_RATE:
 	rate: float
 	basic: bool
 
+@dataclass
+class DOT11_LLC:
+	DSAP: int
+	SSAP: int
+	CTRL: int
+	OUI: str
+	type: int
+
+@dataclass
+class DOT11_EAPOL:
+	llc: DOT11_LLC
+	version: int
+	type: int
+	length: int
+	data: any
+
+@dataclass
+class DOT11_EAPOL_RSN:
+	key_desc: int
+	key_info: any
+	key_len: int
+	replay_counter: int
+	wpa_nonce: any
+	key_iv: any
+	wpa_key_rsc: any
+	wpa_key_id: any
+	wpa_key_mic: any
+	wpa_key_data_len: int
+	wpa_key_data: any
+
 # Формат: бит: (размер_в_байтах, выравнивание)
 RT_FIELDS_SPEC = {
 	0: (8, 8),   # TSFT
@@ -1108,6 +1155,71 @@ class Dot11:
 			return result
 		
 		return None
+	
+	def Dot11EAPOL(self):
+		if self.fc.type_subtype in _dot11_fc_data_types or \
+			self.fc.type_subtype in _dot11_fc_qos_data_types:
 
-w = Dot11(RadioTap(porbe_resp_raw), porbe_resp_raw)
-pprint.pprint(w.Dot11Elt(), indent=1)
+			if 'protected' in self.fc.flags:
+				return None
+
+			offset = 24 # skip FC, Duration, addrs, frag_seq
+			
+			if self.fc.type_subtype in _dot11_fc_qos_data_types:
+				offset += 2
+			
+			pkt = self.pkt[offset:]
+			offset = 0
+			LLC     = pkt[:2]
+			CONTROL = pkt[2]
+			OUI     = pkt[3:6]
+			TYPE    = pkt[6:8]
+			
+			if LLC == b'\xAA\xAA' and CONTROL == 0x03 and TYPE == b'\x88\x8e':
+				offset += 8
+				pkt = pkt[offset:]
+				version, type, length = struct.unpack_from('>BBH', pkt)
+				data = pkt[4:]
+				
+				return DOT11_EAPOL(
+					llc=DOT11_LLC(
+						DSAP=LLC[0], SSAP=LLC[1],
+						CTRL=CONTROL,
+						OUI=self.mac2str(OUI),
+						type=TYPE	
+					),
+					version=version,
+					type=type,
+					length=length,
+					data=data
+				)
+			
+		return None
+
+	def Dot11EAPOL_RSN(self):
+		eapol = self.Dot11EAPOL()
+		
+		if eapol:
+			eapol = eapol.data
+			wpa_key_data_len=int.from_bytes(eapol[93:95], 'big')
+			if wpa_key_data_len:
+				wpa_key_data = eapol[95:95+wpa_key_data_len]
+			else:
+				wpa_key_data = None
+			
+			return DOT11_EAPOL_RSN(
+				key_desc=eapol[0],
+				key_info=struct.unpack_from('>H', eapol, 1)[0],
+				key_len=struct.unpack_from('>H', eapol, 3)[0],
+				replay_counter=struct.unpack_from('>Q', eapol, 5)[0],
+				wpa_nonce=eapol[13:45],
+				key_iv=eapol[45:61],
+				wpa_key_rsc=eapol[61:69],
+				wpa_key_id=eapol[69:77],
+				wpa_key_mic=eapol[77:93],
+				wpa_key_data_len=wpa_key_data_len,
+				wpa_key_data=wpa_key_data
+			)
+
+w = Dot11(RadioTap(eapol_raw), eapol_raw)
+pprint.pprint(w.Dot11EAPOL_RSN(), indent=1)
