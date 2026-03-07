@@ -595,6 +595,11 @@ class WPA_IE:
 	akm_cnt: 1
 	akm_suites: list
 
+@dataclass
+class DOT11_SUPPORTED_RATE:
+	rate: float
+	basic: bool
+
 # Формат: бит: (размер_в_байтах, выравнивание)
 RT_FIELDS_SPEC = {
 	0: (8, 8),   # TSFT
@@ -1050,8 +1055,22 @@ class Dot11:
 			akm_cnt=akm_suites_cnt,
 			akm_suites=akm_suites
 		)
+	
+	def _dot11rates(self, data):
+		rates = []
+		for i in range(len(data)):
+			raw = data[i]
+			is_basic = bool(raw & 0x80)  # проверяем 7-й бит
+			rate_value = raw - 128 if is_basic else raw
+			speed_mbps = rate_value / 2
 
+			rates.append(DOT11_SUPPORTED_RATE(
+				rate=speed_mbps,
+				basic=is_basic
+			))
 		
+		return rates
+
 	def Dot11Elt(self):
 		if self.fc.type_subtype in [0x50, 0x80]:
 			offset = 36 # Skip Dot11 Header + Fixed params 
@@ -1066,7 +1085,9 @@ class Dot11:
 			result = []
 			handlers = {
 				0: self._dot11ssid,
+				1: self._dot11rates,
 				48: self._dot11RSN,
+				50: self._dot11rates,
 				221: self._dot11venorspecific
 			}
 
