@@ -79,6 +79,71 @@ eapol_raw = \
 	b"\xfe\xdc\x78\x26\x4b\xca\x8b\xea\x38\x8d\xac\xab\xea\x28\xa6\x79" \
 	b"\xd7\x49\x79\x1d\x8d\x77\x9b\x41\xcf\xe2\xd3\x0d\x75\x21\x19"
 
+eapol_start_raw = \
+	b"\x00\x00\x0d\x00\x04\x80\x02\x00\x02\x00\x01\x00\x00\x08\x01\x3a" \
+	b"\x01\xec\x43\xf6\x05\xa4\xbc\x20\x32\x33\xe4\x3d\xd8\xec\x43\xf6" \
+	b"\x05\xa4\xbc\x30\x00\xaa\xaa\x03\x00\x00\x00\x88\x8e\x01\x01\x00\x00"
+
+
+eap_packet_hello_raw = \
+	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x02\x8f\x09\xa0\x00\xcf\x01" \
+	b"\x00\x00\x08\x02\xca\x00\x20\x32\x33\xe4\x3d\xd8\xec\x43\xf6\x05" \
+	b"\xa4\xbc\xec\x43\xf6\x05\xa4\xbc\x00\x00\xaa\xaa\x03\x00\x00\x00" \
+	b"\x88\x8e\x01\x00\x00\x0a\x01\xf1\x00\x0a\x01\x68\x65\x6c\x6c\x6f"
+
+
+eapol_rsn_raw = \
+	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x0c\x6c\x09\xc0\x00\xe7\x01" \
+	b"\x00\x00\x88\x02\x10\x05\x6e\xf3\x7a\x1c\xc3\xea\x40\x3f\x8c\x93" \
+	b"\x04\x90\x40\x3f\x8c\x93\x04\x90\x00\x00\x07\x00\xaa\xaa\x03\x00" \
+	b"\x00\x00\x88\x8e\x02\x03\x00\x5f\x02\x00\x8a\x00\x10\x00\x00\x00" \
+	b"\x00\x00\x00\x00\x01\x79\xe9\xea\x5c\x68\x3f\x4e\xc8\x1d\x89\x24" \
+	b"\xf6\x93\x70\x4a\xc2\xbf\x7d\x3b\xa9\xb7\x5d\xa1\x6a\xdb\x92\xe0" \
+	b"\xa4\xbe\x7c\x99\x1b\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
+	b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
+	b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
+	b"\x00\x00\x00\x00\x00\x00\x00"
+
+eapol_eap_expanded_raw = \
+	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x02\x8f\x09\xa0\x00\xcf\x01" \
+	b"\x00\x00\x08\x0a\xca\x00\x20\x32\x33\xe4\x3d\xd8\xec\x43\xf6\x05" \
+	b"\xa4\xbc\xec\x43\xf6\x05\xa4\xbc\x10\x00\xaa\xaa\x03\x00\x00\x00" \
+	b"\x88\x8e\x01\x00\x01\xb4\x01\xf2\x01\xb4\xfe\x00\x37\x2a\x00\x00" \
+	b"\x00\x01\x04\x00\x10\x4a\x00\x01\x10\x10\x22\x00\x01\x04\x10\x47" \
+	b"\x00\x10\xbc\x32\x9e\x00\x1d\xd8\x11\xb2\x86\x01\xec\x43\xf6\x05" \
+	b"\xa4\xbc\x10\x20\x00\x06\xec\x43\xf6\x05\xa4\xbc\x10\x1a\x00\x10" \
+	b"\x1c\x41\x94\x15\x8e\xc7\xc9\x67\x27\x88\x9b\x29\xc2\x2f\xe6\x03" \
+	b"\x10\x32\x00\xc0\x04\x55\xf6\xcd\x2e\xc6\x4a\xdc\xd2\x81\x30\x3a" \
+	b"\xbe\xd2\x7d\x58\x45\x73\x0a\x67\x3a\x2e\xbb\x1a\xa9\xfa\x35\xdf" \
+	b"\xb8\xef\x19\x99\xf7\xca\xfe\x50\x86\x84\x43\xea\xab\x32\x70\x14" \
+	b"\xf8\x78\x66\x5a\x70\xdd\x96\xb7\x51\x1c\xfc\xd8\x0e\x31\x1a\x21" \
+	b"\x25\x64\x33\xc5\xc8\xae\x8d\x8c\x53\x2f\x9e\x97\x5e\x20\x8c\x59" \
+	b"\x27\x89\xc7\xa6\x5d\xbc\x9d\x0b\x3c\xb3\xaa\x25\x5b\xc4\x58\xd5" \
+	b"\x7d\x1a\xfc\xca\x04\xce\x2a\x49\xe9\xfa\x62\x44\x48\x4f\xf2\x63" \
+	b"\x44\x26\x2e\xce\x67\xdd\xc5\x1f\xc4\x2f\xf6\x8d\x92\xcd\x80\x35" \
+	b"\x5c\xc7\x95\x0e\xeb\x45\x4a\x66\xeb\xf3\x8f\x27\xf8\x10\x21\xbb" \
+	b"\x5d\x38\x2b\x71\xb1\xf4\xb1\x77\x18\xf9\xf2\xb4\x9b\xc8\xa4\x8a" \
+	b"\xe6\x61\x9d\x5a\xd6\xb0\x93\x8e\x77\xef\x65\xa7\xf9\x0e\xb1\xd0" \
+	b"\x0b\x84\xa5\x10\xc2\xfd\x91\xa2\x26\xb8\x4e\x27\x4a\x46\xac\x13" \
+	b"\x7e\x22\x48\x29\x10\x04\x00\x02\x00\x3f\x10\x10\x00\x02\x00\x0f" \
+	b"\x10\x0d\x00\x01\x01\x10\x08\x00\x02\x00\x84\x10\x44\x00\x01\x02" \
+	b"\x10\x21\x00\x18\x52\x61\x6c\x69\x6e\x6b\x20\x54\x65\x63\x68\x6e" \
+	b"\x6f\x6c\x6f\x67\x79\x2c\x20\x43\x6f\x72\x70\x2e\x10\x23\x00\x1c" \
+	b"\x52\x61\x6c\x69\x6e\x6b\x20\x57\x69\x72\x65\x6c\x65\x73\x73\x20" \
+	b"\x41\x63\x63\x65\x73\x73\x20\x50\x6f\x69\x6e\x74\x10\x24\x00\x06" \
+	b"\x52\x54\x32\x38\x36\x30\x10\x42\x00\x08\x31\x32\x33\x34\x35\x36" \
+	b"\x37\x38\x10\x54\x00\x08\x00\x06\x00\x50\xf2\x04\x00\x01\x10\x11" \
+	b"\x00\x09\x52\x61\x6c\x69\x6e\x6b\x41\x50\x53\x10\x3c\x00\x01\x01" \
+	b"\x10\x02\x00\x02\x00\x00\x10\x12\x00\x02\x00\x00\x10\x09\x00\x02" \
+	b"\x00\x00\x10\x2d\x00\x04\x80\x00\x00\x00"
+
+eap_response_identity_raw = \
+	b"\x00\x00\x0d\x00\x04\x80\x02\x00\x02\x00\x01\x00\x00\x08\x01\x3a" \
+	b"\x01\xec\x43\xf6\x05\xa4\xbc\x20\x32\x33\xe4\x3d\xd8\xec\x43\xf6" \
+	b"\x05\xa4\xbc\xf0\x00\xaa\xaa\x03\x00\x00\x00\x88\x8e\x01\x00\x00" \
+	b"\x23\x02\xf1\x00\x23\x01\x57\x46\x41\x2d\x53\x69\x6d\x70\x6c\x65" \
+	b"\x43\x6f\x6e\x66\x69\x67\x2d\x52\x65\x67\x69\x73\x74\x72\x61\x72" \
+	b"\x2d\x31\x2d\x30"
 
 
 __rt_presents = ['TSFT', 'Flags', 'Rate', 'Channel', 'FHSS', 'dBm_AntSignal',
@@ -492,7 +557,138 @@ _dot11_vendor_specific_types = {
 	18: 'Tethering'
 }
 
+_dot11_eapol_types = [
+	'EAP', 'START', 'LOGOFF', 'KEY', 'ENCAP_ASF_ALERT', 'MKA', 'ANNOUNCEMENT_GENERIC', 'ANNOUNCEMENT_SPECIFIC', 'ANNOUNCEMENT_REQUEST'
+]
+
+'''
+	RFC 3748
+	  ╰─> 4. EAP Packet Format
+'''
+_dot11_eap_status_codes = {
+	1: 'Request',
+	2: 'Response',
+	3: 'Success',
+	4: 'Failure'
+}
+'''
+	RFC 3748
+	  ╰─> 5. Initial EAP Request/Response Types
+'''
+_dot11_eap_type_codes = {
+	1:   'Identity',
+	2:   'Notification',
+	3:   'Nak',
+	4:   'MD5-Challenge',
+	5:   'OTP',
+	6:   'GTC',
+	13:  'EAP-TLS',
+	18:  'EAP-SIM',
+	21:  'EAP-TTLS',
+	23:  'EAP-AKA',
+	25:  'PEAP',
+	43:  'EAP-FAST',
+	254: 'Expanded',
+	255: 'Experimental'
+}
+
+_dot11_eap_tlv_struct = {
+	0x1001: 'AP_CHANNEL',                         # AP Channel
+	0x1002: 'ASSOCIATION_STATE',                  # Association State
+	0x1003: 'AUTHENTICATION_TYPE',                # Authentication Type
+	0x1004: 'AUTHENTICATION_TYPE_FLAGS',          # Authentication Type Flags
+	0x1005: 'AUTHENTICATOR',                      # Authenticator
+	0x1008: 'CONFIG_METHODS',                     # Config Methods
+	0x1009: 'CONFIGURATION_ERROR',                # Configuration Error
+	0x100a: 'CONFIRMATION_URL4',                  # Confirmation URL4
+	0x100b: 'CONFIRMATION_URL6',                  # Confirmation URL6
+	0x100c: 'CONNECTION_TYPE',                    # Connection Type
+	0x100d: 'CONNECTION_TYPE_FLAGS',              # Connection Type Flags
+	0x100e: 'CREDENTIAL',                         # Credential
+	0x1011: 'DEVICE_NAME',                        # Device Name
+	0x1012: 'DEVICE_PASSWORD_ID',                 # Device Password ID
+	0x1014: 'E_HASH1',                            # E Hash1
+	0x1015: 'E_HASH2',                            # E Hash2
+	0x1016: 'E_SNONCE1',                          # E SNonce1
+	0x1017: 'E_SNONCE2',                          # E SNonce2
+	0x1018: 'ENCRYPTED_SETTINGS',                 # Encrypted Settings
+	0x100f: 'ENCRYPTION_TYPE',                    # Encryption Type
+	0x1010: 'ENCRYPTION_TYPE_FLAGS',              # Encryption Type Flags
+	0x101a: 'ENROLLEE_NONCE',                     # Enrollee Nonce
+	0x101b: 'FEATURE_ID',                         # Feature Id
+	0x101c: 'IDENTITY',                           # Identity
+	0x101d: 'IDENTITY_PROOF',                     # Identity Proof
+	0x101e: 'KEY_WRAP_AUTHENTICATOR',             # Key Wrap Authenticator
+	0x101f: 'KEY_IDENTIFIER',                     # Key Identifier
+	0x1020: 'MAC_ADDRESS',                        # MAC Address
+	0x1021: 'MANUFACTURER',                       # Manufacturer
+	0x1022: 'MESSAGE_TYPE',                       # Message Type
+	0x1023: 'MODEL_NAME',                         # Model Name
+	0x1024: 'MODEL_NUMBER',                       # Model Number
+	0x1026: 'NETWORK_INDEX',                      # Network Index
+	0x1027: 'NETWORK_KEY',                        # Network Key
+	0x1028: 'NETWORK_KEY_INDEX',                  # Network Key Index
+	0x1029: 'NEW_DEVICE_NAME',                    # New Device Name
+	0x102a: 'NEW_PASSWORD',                       # New Password
+	0x102c: 'OOB_DEVICE_PASSWORD',                # OOB Device Password
+	0x102d: 'OS_VERSION',                         # OS Version
+	0x102f: 'POWER_LEVEL',                        # Power Level
+	0x1030: 'PSK_CURRENT',                        # PSK Current
+	0x1031: 'PSK_MAX',                            # PSK Max
+	0x1032: 'PUBLIC_KEY',                         # Public Key
+	0x1033: 'RADIO_ENABLED',                      # Radio Enabled
+	0x1034: 'REBOOT',                             # Reboot
+	0x1035: 'REGISTRAR_CURRENT',                  # Registrar Current
+	0x1036: 'REGISTRAR_ESTABLISHED',              # Registrar Established
+	0x1037: 'REGISTRAR_LIST',                     # Registrar List
+	0x1038: 'REGISTRAR_MAX',                      # Registrar Max
+	0x1039: 'REGISTRAR_NONCE',                    # Registrar Nonce
+	0x103a: 'REQUEST_TYPE',                       # Request Type
+	0x103b: 'RESPONSE_TYPE',                      # Response Type
+	0x103c: 'RF_BANDS',                           # RF Bands
+	0x103d: 'R_HASH1',                            # R Hash1
+	0x103e: 'R_HASH2',                            # R Hash2
+	0x103f: 'R_SNONCE1',                          # R Snonce1
+	0x1040: 'R_SNONCE2',                          # R Snonce2
+	0x1041: 'SELECTED_REGISTRAR',                 # Selected Registrar
+	0x1042: 'SERIAL_NUMBER',                      # Serial Number
+	0x1044: 'WIFI_PROTECTED_SETUP_STATE',         # Wifi Protected Setup State
+	0x1045: 'SSID',                               # SSID
+	0x1046: 'TOTAL_NETWORKS',                     # Total Networks
+	0x1047: 'UUID_E',                             # UUID E
+	0x1048: 'UUID_R',                             # UUID R
+	0x1049: 'VENDOR_EXTENSION',                   # Vendor Extension
+	0x104a: 'VERSION',                            # Version
+	0x104b: 'X509_CERTIFICATE_REQUEST',           # X509 Certificate Request
+	0x104c: 'X509_CERTIFICATE',                   # X509 Certificate
+	0x104d: 'EAP_IDENTITY',                       # EAP Identity
+	0x104e: 'MESSAGE_COUNTER',                    # Message Counter
+	0x104f: 'PUBLIC_KEY_HASH',                    # Public Key Hash
+	0x1050: 'REKEY_KEY',                          # Rekey Key
+	0x1051: 'KEY_LIFETIME',                       # Key Lifetime
+	0x1052: 'PERMITTED_CONFIG_METHODS',           # Permitted Config Methods
+	0x1053: 'SELECTED_REGISTRAR_CONFIG_METHODS',  # Selected Registrar Config Methods
+	0x1054: 'PRIMARY_DEVICE_TYPE',                # Primary Device Type
+	0x1055: 'SECONDARY_DEVICE_TYPE_LIST',         # Secondary Device Type List
+	0x1056: 'PORTABLE_DEVICE',                    # Portable Device
+	0x1057: 'AP_SETUP_LOCKED',                    # Ap Setup Locked
+	0x1058: 'APPLICATION_EXTENSION',              # Application Extension
+	0x1059: 'EAP_TYPE',                           # EAP Type
+	0x1060: 'INITIALIZATION_VECTOR',              # Initialization Vector
+	0x1061: 'KEY_PROVIDED_AUTOMATICALLY',         # Key Provided Automatically
+	0x1062: '8021X_ENABLED',                      # 8021x Enabled
+	0x1063: 'APPSESSIONKEY',                      # AppSessionKey
+	0x1064: 'WEPTRANSMITKEY',                     # WEPTransmitKey
+	0x106a: 'REQUESTED_DEV_TYPE'                  # Requested Device Type
+}
+
+
 MS_OUI = b'\x00\x50\xf2'
+
+@dataclass
+class ID_NAME:
+	id: int
+	name: str
 
 @dataclass
 class RADIOTAP:
@@ -560,9 +756,8 @@ class DOT11_FIXED_PARAMETERS:
 
 @dataclass
 class DOT11_ELT_IE:
-	tag_id: int
 	tag_len: int
-	tag_type: str
+	tag_type: ID_NAME
 	info: any
 
 @dataclass
@@ -573,9 +768,8 @@ class DOT11_VENDOR_SPECIFIC:
 
 @dataclass
 class DOT11_WPS_IE:
-	tag_id: int
 	tag_len: int
-	tag_type: str
+	tag_type: ID_NAME
 	info: any
 
 @dataclass
@@ -586,8 +780,7 @@ class DOT11_WPS_VENDOR_EXTENSION:
 
 @dataclass
 class suite_field:
-	type: int
-	name: str
+	type: ID_NAME
 	oui: str
 
 @dataclass
@@ -629,7 +822,7 @@ class DOT11_LLC:
 class DOT11_EAPOL:
 	llc: DOT11_LLC
 	version: int
-	type: int
+	type: ID_NAME
 	length: int
 	data: any
 
@@ -646,6 +839,14 @@ class DOT11_EAPOL_RSN:
 	wpa_key_mic: any
 	wpa_key_data_len: int
 	wpa_key_data: any
+
+@dataclass
+class DOT11_EAP:
+	code: ID_NAME
+	id: int
+	length: int
+	type: ID_NAME
+	packet: any
 
 # Формат: бит: (размер_в_байтах, выравнивание)
 RT_FIELDS_SPEC = {
@@ -923,9 +1124,11 @@ class Dot11:
 			TAG_INFO = wps_vendor_extension_tlv_data[offset +2:offset+2+TAG_LEN]
 
 			tags.append(DOT11_WPS_IE(
-				tag_id=TAG_ID,
 				tag_len=TAG_LEN,
-				tag_type=_dot11_wps_wfa[TAG_ID],
+				tag_type=ID_NAME(
+					id=TAG_ID,
+					name=_dot11_wps_wfa[TAG_ID]
+				),
 				info=TAG_INFO
 			))
 
@@ -959,9 +1162,11 @@ class Dot11:
 			handler  = handlers.get(TAG_ID, self._dot11decode_default)
 
 			result.append(DOT11_WPS_IE(
-				tag_id=f'{TAG_ID:04x}',
 				tag_len=TAG_LEN,
-				tag_type=_dot11_wps_tlv_names.get(TAG_ID, None),
+				tag_type=ID_NAME(
+					id=TAG_ID,
+					name=_dot11_wps_tlv_names.get(TAG_ID, None)
+				),
 				info=handler(TAG_INFO)
 			))
 
@@ -998,8 +1203,10 @@ class Dot11:
 		group_cipher_oui = rsn[2:5]
 		group_cipher_ver = rsn[5]
 		group_cipher = suite_field(
-			type=group_cipher_ver,
-			name=rsn_cipher_suites.get(group_cipher_ver, "Unknown"),
+			type=ID_NAME(
+				id=group_cipher_ver,
+				name=rsn_cipher_suites.get(group_cipher_ver, "Unknown")
+			),
 			oui=self.mac2str(group_cipher_oui)
 		)
 
@@ -1009,8 +1216,10 @@ class Dot11:
 		for _ in range(pairwise_cnt):
 			suite = rsn[offset:offset+4]
 			pairwise_suites.append(suite_field(
-				type=suite[3],
-				name=rsn_cipher_suites.get(suite[3], "Unknown"),
+				type=ID_NAME(
+					id=suite[3],
+					name=rsn_cipher_suites.get(suite[3], "Unknown")
+				),
 				oui=self.mac2str(suite[0:3])
 			))
 			offset += 4
@@ -1021,8 +1230,10 @@ class Dot11:
 		for _ in range(akm_cnt):
 			suite = rsn[offset:offset+4]
 			akm_suites.append(suite_field(
-				type=suite[3],
-				name=rsn_akm_suites.get(suite[3], "Unknown"),
+				type=ID_NAME(
+					id=suite[3],
+					name=rsn_akm_suites.get(suite[3], "Unknown")
+				),
 				oui=self.mac2str(suite[0:3])
 			))
 			offset += 4
@@ -1080,21 +1291,37 @@ class Dot11:
 		offset = 8
 		for i in range(pairwise_cnt):
 			pairwise = rsn[offset:offset+4]
-			pairwise_suites.append(suite_field(type=pairwise[3], name=rsn_cipher_suites.get(pairwise[3], 0), oui=self.mac2str(pairwise[0:3])))
+			pairwise_suites.append(suite_field(
+					type=ID_NAME(
+						id=pairwise[3], 
+						name=rsn_cipher_suites.get(pairwise[3], 0)
+					), 
+					oui=self.mac2str(pairwise[0:3])
+				)
+			)
 			offset += 4
 
 		akm_suites_cnt = rsn[offset]
 		offset += 2
 		for i in range(akm_suites_cnt):
 			akm = rsn[offset:offset+4]
-			akm_suites.append(suite_field(type=akm[3], name=rsn_akm_suites.get(akm[3], 0), oui=self.mac2str(akm[0:3])))
+			akm_suites.append(suite_field(
+					type=ID_NAME(
+						id=akm[3], 
+						name=rsn_akm_suites.get(akm[3], 0)
+					), 
+					oui=self.mac2str(akm[0:3])
+				)
+			)
 			offset += 4
 
 		return WPA_IE(
 			version=version,
 			multicast_suite=suite_field(
-				type=group_cipher_ver,
-				name=rsn_cipher_suites.get(group_cipher_ver, 0),
+				type=ID_NAME(
+					id=group_cipher_ver,
+					name=rsn_cipher_suites.get(group_cipher_ver, 0)
+				),
 				oui=self.mac2str(group_cipher_oui)
 			),
 			unicast_cnt=pairwise_cnt,
@@ -1145,9 +1372,11 @@ class Dot11:
 				handler  = handlers.get(tag_id, self._dot11decode_default)
 
 				result.append(DOT11_ELT_IE(
-					tag_id=tag_id,
 					tag_len=tag_len,
-					tag_type=_dot11_tags[tag_id],
+					tag_type=ID_NAME(
+						id=tag_id,
+						name=_dot11_tags[tag_id]
+					),
 					info=handler(tag_data)
 				))
 
@@ -1156,6 +1385,93 @@ class Dot11:
 		
 		return None
 	
+	def _dot11EAPOL_RSN(self, data):		
+		if data:
+			key_desc, key_info, key_len, replay_counter, wpa_nonce, key_iv, wpa_key_rsc, wpa_key_id, wpa_key_mic, wpa_key_data_len = struct.unpack_from('>BHHQ32s16s8s8s16sH', data)
+
+			if wpa_key_data_len:
+				wpa_key_data = data[95:95+wpa_key_data_len]
+			else:
+				wpa_key_data = None
+
+			return DOT11_EAPOL_RSN(
+				key_desc=key_desc,
+				key_info=key_info,
+				key_len=key_len,
+				replay_counter=replay_counter,
+				wpa_nonce=wpa_nonce,
+				key_iv=key_iv,
+				wpa_key_rsc=wpa_key_rsc,
+				wpa_key_id=wpa_key_id,
+				wpa_key_mic=wpa_key_mic,
+				wpa_key_data_len=wpa_key_data_len,
+				wpa_key_data=wpa_key_data
+			)
+
+	def _dot11eap_Identity(self, data):
+		return data.decode('utf-8', errors="Ignore")
+	
+	def _dot11eap_Expanded(self, data):
+		size = len(data)
+		result = []
+		offset = 9
+
+		handlers = {
+			0x1021: self._dot11_decode_str, 
+			0x1023: self._dot11_decode_str,
+			0x1024: self._dot11_decode_str,
+			0x1042: self._dot11_decode_str,
+			0x1011: self._dot11_decode_str,
+			0x1008: self._dot11_wps_config_methods,
+			0x1049: self._dot11_wps_vendor_extension
+		}
+
+		while (offset + 4 <= size):
+			TAG_ID   = struct.unpack_from('>H', data[offset:offset+2])[0]
+			TAG_LEN  = struct.unpack_from('>H', data[offset+2:offset+4])[0]
+			TAG_INFO = data[offset+4:offset+4+TAG_LEN]
+			handler = handlers.get(TAG_ID, self._dot11decode_default)
+
+			if TAG_INFO:
+				result.append(DOT11_WPS_IE(
+					tag_len=TAG_LEN,
+					tag_type=ID_NAME(
+						id=TAG_ID,
+						name=_dot11_wps_tlv_names.get(TAG_ID, None)
+					),
+					info=handler(TAG_INFO)
+				))
+
+			offset += 4 + TAG_LEN
+		return result
+
+	def _dot11EAP(self, data):
+		code, id, length, type = struct.unpack_from('>BBHB', data)
+		eap_data = data[5:length+5]
+		handlers = {
+			1: self._dot11eap_Identity,
+			254: self._dot11eap_Expanded
+		}
+		handler = handlers.get(type, self._dot11decode_default)
+
+		if code not in [3, 4]:
+			return DOT11_EAP(
+				code=ID_NAME(
+					id=code,
+					name=_dot11_eap_status_codes.get(code)
+				),
+				id=id,
+				length=length,
+				type=ID_NAME(
+					id=type,
+					name=_dot11_eap_type_codes.get(type)
+				),
+				packet=handler(eap_data)
+			)
+		
+		return None
+		
+
 	def Dot11EAPOL(self):
 		if self.fc.type_subtype in _dot11_fc_data_types or \
 			self.fc.type_subtype in _dot11_fc_qos_data_types:
@@ -1179,8 +1495,17 @@ class Dot11:
 				offset += 8
 				pkt = pkt[offset:]
 				version, type, length = struct.unpack_from('>BBH', pkt)
-				data = pkt[4:]
+				if length:
+					data = pkt[4:]
+				else:
+					data = None
 				
+				handlers = {
+					0: self._dot11EAP,
+					3: self._dot11EAPOL_RSN
+				}
+				handler = handlers.get(type, self._dot11decode_default) 
+
 				return DOT11_EAPOL(
 					llc=DOT11_LLC(
 						DSAP=LLC[0], SSAP=LLC[1],
@@ -1189,37 +1514,15 @@ class Dot11:
 						type=TYPE	
 					),
 					version=version,
-					type=type,
+					type=ID_NAME(
+						id=type,
+						name=_dot11_eapol_types[type]
+					),
 					length=length,
-					data=data
+					data=handler(data)
 				)
 			
 		return None
 
-	def Dot11EAPOL_RSN(self):
-		eapol = self.Dot11EAPOL()
-		
-		if eapol:
-			eapol = eapol.data
-			wpa_key_data_len=int.from_bytes(eapol[93:95], 'big')
-			if wpa_key_data_len:
-				wpa_key_data = eapol[95:95+wpa_key_data_len]
-			else:
-				wpa_key_data = None
-			
-			return DOT11_EAPOL_RSN(
-				key_desc=eapol[0],
-				key_info=struct.unpack_from('>H', eapol, 1)[0],
-				key_len=struct.unpack_from('>H', eapol, 3)[0],
-				replay_counter=struct.unpack_from('>Q', eapol, 5)[0],
-				wpa_nonce=eapol[13:45],
-				key_iv=eapol[45:61],
-				wpa_key_rsc=eapol[61:69],
-				wpa_key_id=eapol[69:77],
-				wpa_key_mic=eapol[77:93],
-				wpa_key_data_len=wpa_key_data_len,
-				wpa_key_data=wpa_key_data
-			)
-
-w = Dot11(RadioTap(eapol_raw), eapol_raw)
-pprint.pprint(w.Dot11EAPOL_RSN(), indent=1)
+w = Dot11(RadioTap(eap_response_identity_raw), eap_response_identity_raw)
+pprint.pprint(w.Dot11EAPOL())
