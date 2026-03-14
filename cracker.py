@@ -14,6 +14,8 @@ from misc import WiFiPhyManager
 import target
 import wifiman 
 
+import pprint
+
 from PyQt5.QtWidgets import (
 	QAbstractItemView, QLabel, QMainWindow, QTableView, QVBoxLayout, QHBoxLayout, QPushButton, 
 	QMessageBox, QApplication, QWidget, QStyledItemDelegate, QStyleOptionProgressBar, QStyle, QStatusBar, QDialog
@@ -88,7 +90,7 @@ class StationsTable(QWidget):
 		
 		self.table = QTableView(self)
 		self.model = QStandardItemModel(0, 5, self)
-		self.model.setHorizontalHeaderLabels(['MAC', 'RSSI', 'Frames', 'Rate', 'Modulation'])
+		self.model.setHorizontalHeaderLabels(['MAC', 'RSSI', 'Frames', 'Rate', 'Modulation', 'Probes'])
 
 		self.table.setModel(self.model)
 		self.table.horizontalHeader().setStretchLastSection(True)
@@ -104,11 +106,13 @@ class StationsTable(QWidget):
 		self.progress_delegate = ProgressBarDelegate(self.table)
 		self.table.setItemDelegateForColumn(1, self.progress_delegate)
 
-		self.table.setColumnWidth(0, 170)
-		self.table.setColumnWidth(1, 300)
-		self.table.setColumnWidth(4, 55)
-		self.table.setColumnWidth(5, 80)
-		
+		self.table.setColumnWidth(0, 200)  # MAC
+		self.table.setColumnWidth(1, 300)  # RSSI
+		self.table.setColumnWidth(2, 55)   # Frames
+		self.table.setColumnWidth(3, 80)   # Rate
+		self.table.setColumnWidth(4, 200)  # Modulation
+		self.table.setColumnWidth(5, 100)  # Probes
+
 		top_layout.addWidget(self.assocIconLabel)
 		top_layout.addWidget(self.assocLabel)
 		layout.addLayout(top_layout)
@@ -126,40 +130,53 @@ class StationsTable(QWidget):
 		self.assocLabel.setText(f'Associated stations for "{ssid}":')
 
 	def add_sta(self, sta_data):
-		sta_mac = sta_data.get('station_MAC', None)
+		sta_mac = sta_data['list_items'].get('station_MAC', None)
 		if sta_mac:
 			row = self.find_row_by_bssid(sta_mac)
-		
-		if row == -1:
-			for k, v in sta_data.items():
-				if k == 'station_MAC':
-					first_item = QStandardItem(QIcon('icons/signal.png'), str(v))
-					row = [first_item]
-				elif k == 'station_ChannelFlags':
-					channel_flags = '+'.join(v)
-					row.append(QStandardItem(channel_flags))
-				elif k == 'station_Rate':
-					row.append(QStandardItem(f'{v} MB/s'))
-				else:
-					row.append(QStandardItem(str(v)))
-		
-			self.model.appendRow(row)
-			row_number = self.model.rowCount() -1
-			self.table.setRowHeight(row_number, 40)
-		
-		else:
-			for index, (k, v) in enumerate(sta_data.items()):
-				item = self.model.item(row, index)
-				if k == 'station_MAC':
-					continue
-				elif k == 'station_ChannelFlags':
-					channel_flags = '+'.join(v)
-					item.setText(channel_flags)
-				elif k == 'station_Rate':
-					item.setText(f'{v} MB/s')
-				else:
-					item.setText(str(v))
 
+			if row == -1:
+				for k, v in sta_data['list_items'].items():
+					if k == 'station_MAC':
+						first_item = QStandardItem(QIcon('icons/signal.png'), str(v))
+						row = [first_item]
+					elif k == 'station_ChannelFlags':
+						channel_flags = '+'.join(v)
+						row.append(QStandardItem(channel_flags))
+					elif k == 'station_Rate':
+						row.append(QStandardItem(f'{v} MB/s'))
+					else:
+						row.append(QStandardItem(str(v)))
+
+				self.model.appendRow(row)
+				row_number = self.model.rowCount() -1
+				self.table.setRowHeight(row_number, 40)
+			else:
+				for index, (k, v) in enumerate(sta_data.get('list_items').items()):
+					item = self.model.item(row, index)
+					if k == 'station_MAC':
+						continue
+					elif k == 'station_ChannelFlags':
+						channel_flags = '+'.join(v)
+						item.setText(channel_flags)
+					elif k == 'station_Rate':
+						item.setText(f'{v} MB/s')
+					else:
+						item.setText(str(v))
+
+				probes = sta_data.get('probes', None)
+				probes_list = []
+				if probes:
+					for pk, pv in probes.items():
+						for probe_key, probe_value in pv.items():
+							if probe_key == 'ssid':
+								if probe_value not in probes_list:
+									probes_list.append(probe_value)
+				
+				item = self.model.item(row, 5)
+				if item:
+					item.setText(', '.join(probes_list))
+				else:
+					self.model.setItem(row, 5, QStandardItem(', '.join(probes_list)))
 
 class BSSIDDelegate(QStyledItemDelegate):
 	def __init__(self, parent=None):
@@ -213,16 +230,48 @@ class BSSIDDelegate(QStyledItemDelegate):
 		else:
 			super().paint(painter, option, index)
 
+class WPSDeligate(QStyledItemDelegate):
+	def __init__(self, parent=None):
+		super().__init__(parent)
+
+	def paint(self, painter, option, index):
+		state = index.data(Qt.UserRole +4)
+		version = index.data(Qt.UserRole +5)
+		
+		if state in ['WPS_LOCKED', 'WPS_UNLOCKED']:
+			font = QFont(option.font)
+			painter.save()
+			
+			painter.setFont(font)
+			if state == 'WPS_LOCKED':
+				painter.setPen(Qt.red)
+				font.setUnderline(True)
+				icon = QIcon('icons/padlock.png')
+			else:
+				icon = QIcon('icons/unlocked.png')
+
+			painter.setFont(font)
+
+			icon_size = 16
+			wps_rect = option.rect.adjusted(20, 0, 0, 0)
+			icon_rect = QRect(option.rect.left(), option.rect.top()+12, icon_size, icon_size)
+			icon.paint(painter, icon_rect, Qt.AlignLeft | Qt.AlignVCenter)
+			painter.drawText(wps_rect, Qt.AlignLeft | Qt.AlignVCenter, version)
+			painter.restore()
+		else:
+			super().paint(painter, option, index)
+
 class WiFiManager(QMainWindow):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 
 		self.access_points = {}
+		self.probes = {}
 		self.running = False
 
 		self.setWindowTitle("WiFi Cracker")
 		self.setWindowIcon(QIcon('icons/satellite-dish.png'))
-		self.setGeometry(*self._center_window(1120, 520))
+		self.setGeometry(*self._center_window(1180, 720))
 		self.central_widget = QWidget()
 		self.setCentralWidget(self.central_widget)
 
@@ -272,7 +321,7 @@ class WiFiManager(QMainWindow):
 
 		self.table = QTableView(self)
 		self.model = QStandardItemModel(0, 6, self)
-		self.model.setHorizontalHeaderLabels(['BSSID', 'ch', 'Vendor', 'RSSI', 'Encryption', 'Cipher', 'AKM'])
+		self.model.setHorizontalHeaderLabels(['BSSID', 'ch', 'Vendor', 'RSSI', 'Encryption', 'Cipher', 'AKM', 'WPS', 'Beacons'])
 		self.table.setModel(self.model)
 		self.table.horizontalHeader().setStretchLastSection(True)
 		self.table.setEditTriggers(QTableView.NoEditTriggers)
@@ -282,23 +331,44 @@ class WiFiManager(QMainWindow):
 		self.table.setIconSize(QSize(32, 32))
 		self.table.selectionModel().selectionChanged.connect(self.on_selection_changed)
 		self.table.doubleClicked.connect(self.select_target)
-		self.progress_delegate = ProgressBarDelegate(self.table)
-		self.table.setItemDelegateForColumn(3, self.progress_delegate)
 		self.bssid_delegate = BSSIDDelegate(self.table)
+		self.progress_delegate = ProgressBarDelegate(self.table)
+		self.wps_deligate = WPSDeligate(self.table)
 		self.table.setItemDelegateForColumn(0, self.bssid_delegate)
+		self.table.setItemDelegateForColumn(3, self.progress_delegate)
+		self.table.setItemDelegateForColumn(7, self.wps_deligate)
 
-		self.table.setColumnWidth(0, 250) # BSSID
+		self.table.setColumnWidth(0, 200) # BSSID
 		self.table.setColumnWidth(1, 50)  # Channel
-		self.table.setColumnWidth(2, 100) # Vendor
-		self.table.setColumnWidth(3, 350) # RSSI
+		self.table.setColumnWidth(2, 90) # Vendor
+		self.table.setColumnWidth(3, 250) # RSSI
 		self.table.setColumnWidth(4, 100) # Encryption
 		self.table.setColumnWidth(5, 100) # Cipher
 		self.table.setColumnWidth(6, 100) # AKM
+		self.table.setColumnWidth(7, 150) # WPS
+		#self.table.setColumnWidth(8, 100) # Beacons
+
+		self.probes_table = QTableView(self)
+		self.probes_table_model = QStandardItemModel(0, 3, self)
+		self.probes_table_model.setHorizontalHeaderLabels(['MAC', 'SSID', 'Vendor'])
+
+		self.probes_table.setModel(self.probes_table_model)
+		self.probes_table.horizontalHeader().setStretchLastSection(True)
+		self.probes_table.setEditTriggers(QTableView.NoEditTriggers)
+		self.probes_table.setShowGrid(False)
+		self.probes_table.verticalHeader().setVisible(False)
+		self.probes_table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+		self.probes_table.setIconSize(QSize(32, 32))
+		self.probes_table.setFixedHeight(150)
+
+		self.probes_table.setColumnWidth(0, 250) # MAC
+		self.probes_table.setColumnWidth(1, 350) # SSID
 
 		# Основной layout
 		main_layout = QVBoxLayout(self.central_widget)
 		main_layout.addLayout(top_layout)
 		main_layout.addWidget(self.table)
+		main_layout.addWidget(self.probes_table)
 		self.setLayout(main_layout)
 
 		self.interfaceIconLabel = QLabel()
@@ -462,7 +532,7 @@ class WiFiManager(QMainWindow):
 		data = json.loads(network)
 		items = []
 
-		for key in ['BSSID', 'SSID', 'channel', 'vendor', 'rssi', 'encryption', 'cipher', 'akm']:
+		for key in ['BSSID', 'SSID', 'channel', 'vendor', 'rssi', 'encryption', 'cipher', 'akm', 'wps', 'beacons']:
 			if key == 'BSSID':
 				item = QStandardItem(str(data.get(key, '')))
 				item.setData('AP_ITEM', Qt.UserRole)
@@ -470,18 +540,38 @@ class WiFiManager(QMainWindow):
 				item.setData(data.get('BSSID', ''), Qt.UserRole +2)
 				item.setData(self.vendor_oui.get_mac_vendor_mixed(data.get('BSSID', '')), Qt.UserRole +3)
 				items.append(item)
+			if key == 'wps':
+				item = QStandardItem(data['wps']['version'])
+				item.setData(data['wps']['role'], Qt.UserRole + 4)
+				item.setData(data['wps']['version'], Qt.UserRole + 5)
+				items.append(item)
 			else:
 				if key not in ['SSID', 'BSSID']:
 					items.append(QStandardItem(str(data.get(key, ''))))
 		
 		self.model.appendRow(items)
 		self.table.setRowHeight(self.model.rowCount() - 1, 40)
+
+	@pyqtSlot(str)
+	def __add_probe(self, probe):
+		probe = json.loads(probe)
+		items = []
+		for key in ['MAC', 'SSID', 'Vendor']:
+			if key == 'MAC':
+				mac = self.vendor_oui.get_mac_vendor_mixed(probe.get('MAC', ''))
+				item = QStandardItem(QIcon('icons/investigation.png'), mac)
+				items.append(item)
+			else:
+				items.append(QStandardItem(probe.get(key, '')))
+		
+		self.probes_table_model.appendRow(items)
+		self.probes_table.setRowHeight(self.probes_table_model.rowCount() - 1, 40)
 	
-	@pyqtSlot(str, int, str)
-	def __update_ap_role_by_bssid(self, bssid, role, value):
+	@pyqtSlot(str, int, int, str)
+	def __update_ap_role_by_bssid(self, bssid, role, col, value):
 		row = self.find_row_by_userrole(bssid.upper(), 2) # Ищем по UserRole +2, где хранится BSSID
 		if row != -1:
-			item = self.model.item(row, 0)
+			item = self.model.item(row, col)
 			if item:
 				item.setData(value, Qt.UserRole + role)
 
@@ -503,7 +593,7 @@ class WiFiManager(QMainWindow):
 				sub_row = [QStandardItem("") for _ in range(self.model.columnCount())]
 				sub_row[0] = subitem
 				self.model.insertRow(row + 1, sub_row)
-				self.table.setSpan(row + 1, 0, 1, 6)
+				self.table.setSpan(row + 1, 0, 1, 9)
 				subitem_index = self.model.index(row + 1, 0)
 				stations_table = StationsTable(self)
 				stations_table.set_ssid(ssid)
@@ -559,10 +649,11 @@ class WiFiManager(QMainWindow):
 			Q_ARG(bool, enabled)
 		)
 
-	def safe_update_ap_role_by_bssid(self, bssid, role, value):
+	def safe_update_ap_role_by_bssid(self, bssid, role, col, value):
 		QMetaObject.invokeMethod(self, "__update_ap_role_by_bssid", Qt.QueuedConnection, 
 			   Q_ARG("QString", bssid),
 			   Q_ARG("int", role),
+			   Q_ARG("int", col),
 			   Q_ARG("QString", value)
 			)
 
@@ -574,6 +665,9 @@ class WiFiManager(QMainWindow):
 
 	def safe_add_network(self, network):
 		QMetaObject.invokeMethod(self, "__add_network", Qt.QueuedConnection, Q_ARG(str, network))
+
+	def safe_add_probe(self, probe):
+		QMetaObject.invokeMethod(self, "__add_probe", Qt.QueuedConnection, Q_ARG(str, probe))
 
 	def safe_update_ap_item_by_bssid(self, bssid, item, data):
 		QMetaObject.invokeMethod(self, "__update_ap_by_bssid", Qt.QueuedConnection, #TODO
@@ -659,15 +753,39 @@ class WiFiManager(QMainWindow):
 			type_subtype = wifi_pkt.return_Dot11_frame_control()
 			dot11frame = wifi_pkt.return_Dot11()
 
+			if type_subtype == 0x40:
+				wifi = WiFiHelper()
+				elt = wifi_pkt.return_Dot11Elt()
+				ssid = wifi.get_ap_ssid(wifi_pkt)
+				vendor = wifi.get_ap_vendor(wifi_pkt)
+				probe_addr = dot11frame.addr2
+
+				if probe_addr not in self.probes:
+					probe = {
+						'MAC': probe_addr,
+						'SSID': ssid,
+						'Vendor': vendor 
+					}
+					self.probes[probe_addr] = probe
+					self.safe_add_probe(json.dumps(probe))
+				
+				for ap_k, ap_v in self.access_points.items():
+					if probe_addr in ap_v['clients']:
+						#print(f'[+] Probe req: ssid="{ssid}", vendor="{vendor}" from {probe_addr}')
+						if not probe_addr in self.access_points[ap_k]['clients'][probe_addr]['probes']:
+							self.access_points[ap_k]['clients'][probe_addr]['probes'][probe_addr] = {
+								'ssid': ssid,
+								'vendor': vendor
+							}
+							self.safe_update_sta_data(ap_k, json.dumps(self.access_points[ap_k]['clients'][probe_addr]))
+
 			if type_subtype == 0x94: # Block ACK req
 				if dot11frame.addr2 in self.access_points:
 					if dot11frame.addr1 in self.access_points[dot11frame.addr2]['clients']:
+						self.access_points[dot11frame.addr2]['clients'][dot11frame.addr1]['list_items']['station_ChannelFlags'] = channel_flags
+						self.access_points[dot11frame.addr2]['clients'][dot11frame.addr1]['list_items']['station_Rate'] = rate
 						client = self.access_points[dot11frame.addr2]['clients'][dot11frame.addr1]
-						client['station_ChannelFlags'] = channel_flags
-						client['station_Rate'] = rate
-						self.access_points[dot11frame.addr2]['clients'][dot11frame.addr1] = client
-
-						self.safe_update_sta_data(dot11frame.addr2, json.dumps(client))						
+						self.safe_update_sta_data(dot11frame.addr2, json.dumps(client))
 
 			if type_subtype in [0x08, 0x88]: # Data, QoS Data
 				fc_flags = wifi_pkt.return_dot11_framecontrol_flags()
@@ -705,21 +823,22 @@ class WiFiManager(QMainWindow):
 							if DEBUG:
 								print(f"[+] Detected client on {ap_addr} -> {client_addr}")
 							client = {
-								'station_MAC': self.vendor_oui.get_mac_vendor_mixed(client_addr),
-								'station_dBm_AntSignal': rssi,
-								'frames': 1,
-								'station_Rate': rate,
-								'station_ChannelFlags': channel_flags
+								'list_items': {
+									'station_MAC': self.vendor_oui.get_mac_vendor_mixed(client_addr),
+									'station_dBm_AntSignal': rssi,
+									'frames': 1,
+									'station_Rate': rate,
+									'station_ChannelFlags': channel_flags
+								},
+								'probes': {}
 							}
 							self.found_sta_cnt += 1
 							self.safe_update_label(self.networksLabel, f"Networks: {self.found_ap_cnt} [{self.found_sta_cnt}]")
 							self.access_points[ap_addr]['clients'][client_addr] = client
 							self.safe_update_sta_data(ap_addr, json.dumps(client))
 						else:
+							self.access_points[ap_addr]['clients'][client_addr]['list_items']['frames'] += 1
 							client = self.access_points[ap_addr]['clients'][client_addr]
-							frames = client['frames']
-							frames += 1
-							self.access_points[ap_addr]['clients'][client_addr] = client
 							self.safe_update_sta_data(ap_addr, json.dumps(client))
 						
 			beacon = wifi_pkt.return_Dot11_Beacon_ProbeResponse()
@@ -735,15 +854,42 @@ class WiFiManager(QMainWindow):
 				akm_suites = ', '.join(akm_suites) if akm_suites else '-'
 				unicast_pair_suites = ', '.join(unicast_pair_suites) if unicast_pair_suites else '-'
 				enc_type = '/'.join(enc_type)
-				
+			
+				wps_version = '-'
+				wps_locked = None
+				wps_role = 'WPS_NONE'
+
+				for ie in elt:
+					if ie.ID == 221 and ie.INFO.type == 4 and ie.INFO.oui == '00:50:f2':
+						wps_info = ie.INFO.data
+						for wps_ie in wps_info:
+							if wps_ie.ID == 0x104a and wps_ie.INFO == b'\x10':
+								wps_version = '1.0'
+							if wps_ie.ID == 0x1049:
+								if hasattr(wps_ie.INFO, 'ID') and wps_ie.INFO.ID == '00:37:2a':
+									wps_version = '2.0'
+							if wps_ie.ID == 0x1057 and wps_ie.INFO == b'\x01':
+								wps_locked = True
+						
+						wps_role = 'WPS_LOCKED' if wps_locked else 'WPS_UNLOCKED'
+					
+					
 				if bssid in self.access_points:
-					self.safe_update_ap_role_by_bssid(bssid, 1, ssid)             # Обновляем SSID в UserRole +1
+					beacons = self.access_points[bssid]['beacons']
+					beacons += 1
+					self.access_points[bssid]['beacons'] = beacons
+
+					self.safe_update_ap_role_by_bssid(bssid, 1, 0, ssid)          # Обновляем SSID в UserRole +1
 					self.safe_update_ap_item_by_bssid(bssid, 1, str(channel))     # Обновляем канал
 					self.safe_update_ap_item_by_bssid(bssid, 2, str(vendor))      # Обновляем вендора
 					self.safe_update_ap_item_by_bssid(bssid, 3, str(rssi))        # Обновляем RSSI
 					self.safe_update_ap_item_by_bssid(bssid, 4, str(enc_type))    # Обновляем тип шифрования
 					self.safe_update_ap_item_by_bssid(bssid, 5, str(unicast_pair_suites)) # Обновляем парные шифры
 					self.safe_update_ap_item_by_bssid(bssid, 6, str(akm_suites))  # Обновляем шифры аутентификации
+					self.safe_update_ap_item_by_bssid(bssid, 7, str(wps_version))  # Обновляем WPS
+					self.safe_update_ap_item_by_bssid(bssid, 8, str(beacons))     # Обновляем маяки
+					self.safe_update_ap_role_by_bssid(bssid, 2, 7, wps_role)
+					self.safe_update_ap_role_by_bssid(bssid, 3, 7, wps_version)
 				else:
 					ap_info = {
 						"BSSID": bssid.upper(),
@@ -754,6 +900,12 @@ class WiFiManager(QMainWindow):
 						"encryption": enc_type,
 						"cipher": unicast_pair_suites,
 						"akm": akm_suites,
+						"wps": {
+							"version": wps_version,
+							"locked": wps_locked,
+							"role": wps_role
+						},
+						"beacons": 1,
 						"clients": {}
 					}
 					self.found_ap_cnt += 1

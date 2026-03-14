@@ -66,7 +66,6 @@ class WiFiHelper:
 								vendor = self.vendors_oui.get(ven, "Unknown")
 								return vendor
 		return "Unknown"
-	
 
 	def return_ap_encryptions(self, beacon, elt):
 		enc_type = []

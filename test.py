@@ -3,148 +3,6 @@
 import struct
 from dataclasses import dataclass
 from types import SimpleNamespace
-import pprint
-
-raw_pkt = \
-	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x02\x6c\x09\xa0\x00\xd1\x01" \
-	b"\x00\x00\x88\x42\x3a\x01\xb8\xbb\xaf\x1e\xfc\x9c\x74\xda\x88\xa5" \
-	b"\xcc\x12\x74\xda\x88\xa5\xcc\x12\x20\x55\x00\x00\x7d\x15\x00\x20" \
-	b"\x00\x00\x00\x00\x82\x3f\xb8\x1c\x7b\x01\xf8\x4d\x7d\x72\x01\x0e" \
-	b"\xec\xc3\xb9\x80\xd9\x0f\x0e\x6d\x25\x0e\x2a\x2d\x3e\x69\x87\xba" \
-	b"\x02\x48\x5c\x38\xea\xb8\x86\x5d\x93\xcf\x80\xa0\xb8\x25\x13\xba"
-
-beacon_raw = \
-	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x02\x6c\x09\xa0\x00\xaf\x01" \
-	b"\x00\x00\x80\x00\x00\x00\xff\xff\xff\xff\xff\xff\x60\xce\x86\x41" \
-	b"\x31\xf0\x60\xce\x86\x41\x31\xf0\xf0\x5d\x95\x11\xfa\xfb\x03\x00" \
-	b"\x00\x00\x64\x00\x11\x04\x00\x0c\x52\x54\x2d\x47\x50\x4f\x4e\x2d" \
-	b"\x33\x31\x46\x30\x01\x08\x82\x84\x8b\x96\x24\x30\x48\x6c\x03\x01" \
-	b"\x01\x05\x04\x00\x01\x00\x00\x07\x06\x52\x55\x20\x01\x0e\x1e\x2a" \
-	b"\x01\x00\x32\x04\x0c\x12\x18\x60\x30\x18\x01\x00\x00\x0f\xac\x02" \
-	b"\x02\x00\x00\x0f\xac\x04\x00\x0f\xac\x02\x01\x00\x00\x0f\xac\x02" \
-	b"\x0c\x00\x2d\x1a\xbc\x08\x1b\xff\xff\x00\x00\x00\x00\x00\x00\x00" \
-	b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x3d\x16" \
-	b"\x01\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	b"\x00\x00\x00\x00\x00\x00\x4a\x0e\x14\x00\x0a\x00\x2c\x01\xc8\x00" \
-	b"\x14\x00\x05\x00\x19\x00\x7f\x08\x05\x00\x08\x00\x00\x00\x00\x40" \
-	b"\xdd\x31\x00\x50\xf2\x04\x10\x4a\x00\x01\x10\x10\x44\x00\x01\x02" \
-	b"\x10\x47\x00\x10\x13\xc3\x3e\x9b\x1a\x43\x48\xd4\xdb\x6a\xff\xcd" \
-	b"\x62\xb2\xda\xb8\x10\x3c\x00\x01\x03\x10\x49\x00\x06\x00\x37\x2a" \
-	b"\x00\x01\x20\xdd\x09\x00\x10\x18\x02\x00\x00\x1c\x00\x00\xdd\x1a" \
-	b"\x00\x50\xf2\x01\x01\x00\x00\x50\xf2\x02\x02\x00\x00\x50\xf2\x04" \
-	b"\x00\x50\xf2\x02\x01\x00\x00\x50\xf2\x02\xdd\x18\x00\x50\xf2\x02" \
-	b"\x01\x01\x84\x00\x03\xa4\x00\x00\x27\xa4\x00\x00\x42\x43\x5e\x00" \
-	b"\x62\x32\x2f\x00"
-
-
-porbe_resp_raw = \
-	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x02\x6c\x09\xa0\x00\xbd\x01" \
-	b"\x00\x00\x50\x00\x00\x00\xba\x94\xe7\x81\x79\xc3\xb0\xa7\xb9\xcd" \
-	b"\x07\x1e\xb0\xa7\xb9\xcd\x07\x1e\x60\x9b\xff\x33\x13\x2d\x14\x00" \
-	b"\x00\x00\x64\x00\x11\x04\x00\x09\x55\x73\x70\x65\x68\x2d\x35\x38" \
-	b"\x31\x01\x08\x82\x84\x8b\x96\x12\x24\x48\x6c\x03\x01\x01\x2a\x01" \
-	b"\x04\x32\x04\x0c\x18\x30\x60\x2d\x1a\x6e\x10\x17\xff\xff\x00\x00" \
-	b"\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	b"\x00\x00\x00\x3d\x16\x01\x05\x06\x00\x00\x00\x00\x00\x00\x00\x00" \
-	b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x30\x14\x01\x00\x00" \
-	b"\x0f\xac\x04\x01\x00\x00\x0f\xac\x04\x01\x00\x00\x0f\xac\x02\x00" \
-	b"\x00\x7f\x09\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0b\x05\x01\x00" \
-	b"\x00\x12\x7a\xdd\x18\x00\x50\xf2\x02\x01\x01\x00\x00\x03\xa4\x00" \
-	b"\x00\x27\xa4\x00\x00\x42\x43\x5e\x00\x62\x32\x2f\x00\x4a\x0e\x14" \
-	b"\x00\x0a\x00\x2c\x01\xc8\x00\x14\x00\x05\x00\x19\x00\xdd\x8e\x00" \
-	b"\x50\xf2\x04\x10\x4a\x00\x01\x10\x10\x44\x00\x01\x02\x10\x3b\x00" \
-	b"\x01\x03\x10\x47\x00\x10\x38\x83\x30\x92\x30\x92\x18\x83\x9c\x77" \
-	b"\xb0\xa7\xb9\xcd\x07\xc4\x10\x21\x00\x07\x54\x50\x2d\x4c\x69\x6e" \
-	b"\x6b\x10\x23\x00\x09\x54\x4c\x2d\x57\x52\x38\x34\x31\x4e\x10\x24" \
-	b"\x00\x04\x31\x34\x2e\x30\x10\x42\x00\x03\x31\x2e\x30\x10\x54\x00" \
-	b"\x08\x00\x06\x00\x50\xf2\x04\x00\x01\x10\x11\x00\x1b\x57\x69\x72" \
-	b"\x65\x6c\x65\x73\x73\x20\x4e\x20\x52\x6f\x75\x74\x65\x72\x20\x54" \
-	b"\x4c\x2d\x57\x52\x38\x34\x31\x4e\x10\x08\x00\x02\x21\x0c\x10\x3c" \
-	b"\x00\x01\x01\x10\x49\x00\x06\x00\x37\x2a\x00\x01\x20\xdd\x07\x00" \
-	b"\x0c\x43\x00\x00\x00\x00"
-
-
-eapol_raw = \
-	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x0c\x6c\x09\xc0\x00\xeb\x01" \
-	b"\x00\x00\x88\x02\xc4\x04\x06\x98\xd2\xcc\x98\x89\x40\x3f\x8c\x93" \
-	b"\x04\x90\x40\x3f\x8c\x93\x04\x90\x10\x00\x07\x00\xaa\xaa\x03\x00" \
-	b"\x00\x00\x88\x8e\x02\x03\x00\x97\x02\x13\xca\x00\x10\x00\x00\x00" \
-	b"\x00\x00\x00\x00\x02\xb1\xec\xd7\x10\xac\xe4\x6c\xe8\x48\xca\x9d" \
-	b"\x1a\x4f\x43\x79\x50\x02\x10\x46\xfd\x74\xa9\x68\xbc\x7e\x89\x6f" \
-	b"\x6a\x88\x13\x25\x16\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	b"\x00\x00\x00\x00\x00\x06\x0a\xae\x0c\x2c\x5f\x6d\x4b\x72\x34\x20" \
-	b"\xc9\xc3\x63\x34\xd2\x00\x38\xa7\x6b\x79\xf4\x79\xb2\x18\x28\xc4" \
-	b"\xde\x30\xca\x33\x27\xbd\x37\x90\xd0\xe4\x14\x27\x8f\xb2\xd9\x2b" \
-	b"\xfe\xdc\x78\x26\x4b\xca\x8b\xea\x38\x8d\xac\xab\xea\x28\xa6\x79" \
-	b"\xd7\x49\x79\x1d\x8d\x77\x9b\x41\xcf\xe2\xd3\x0d\x75\x21\x19"
-
-eapol_start_raw = \
-	b"\x00\x00\x0d\x00\x04\x80\x02\x00\x02\x00\x01\x00\x00\x08\x01\x3a" \
-	b"\x01\xec\x43\xf6\x05\xa4\xbc\x20\x32\x33\xe4\x3d\xd8\xec\x43\xf6" \
-	b"\x05\xa4\xbc\x30\x00\xaa\xaa\x03\x00\x00\x00\x88\x8e\x01\x01\x00\x00"
-
-
-eap_packet_hello_raw = \
-	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x02\x8f\x09\xa0\x00\xcf\x01" \
-	b"\x00\x00\x08\x02\xca\x00\x20\x32\x33\xe4\x3d\xd8\xec\x43\xf6\x05" \
-	b"\xa4\xbc\xec\x43\xf6\x05\xa4\xbc\x00\x00\xaa\xaa\x03\x00\x00\x00" \
-	b"\x88\x8e\x01\x00\x00\x0a\x01\xf1\x00\x0a\x01\x68\x65\x6c\x6c\x6f"
-
-
-eapol_rsn_raw = \
-	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x0c\x6c\x09\xc0\x00\xe7\x01" \
-	b"\x00\x00\x88\x02\x10\x05\x6e\xf3\x7a\x1c\xc3\xea\x40\x3f\x8c\x93" \
-	b"\x04\x90\x40\x3f\x8c\x93\x04\x90\x00\x00\x07\x00\xaa\xaa\x03\x00" \
-	b"\x00\x00\x88\x8e\x02\x03\x00\x5f\x02\x00\x8a\x00\x10\x00\x00\x00" \
-	b"\x00\x00\x00\x00\x01\x79\xe9\xea\x5c\x68\x3f\x4e\xc8\x1d\x89\x24" \
-	b"\xf6\x93\x70\x4a\xc2\xbf\x7d\x3b\xa9\xb7\x5d\xa1\x6a\xdb\x92\xe0" \
-	b"\xa4\xbe\x7c\x99\x1b\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" \
-	b"\x00\x00\x00\x00\x00\x00\x00"
-
-eapol_eap_expanded_raw = \
-	b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x02\x8f\x09\xa0\x00\xcf\x01" \
-	b"\x00\x00\x08\x0a\xca\x00\x20\x32\x33\xe4\x3d\xd8\xec\x43\xf6\x05" \
-	b"\xa4\xbc\xec\x43\xf6\x05\xa4\xbc\x10\x00\xaa\xaa\x03\x00\x00\x00" \
-	b"\x88\x8e\x01\x00\x01\xb4\x01\xf2\x01\xb4\xfe\x00\x37\x2a\x00\x00" \
-	b"\x00\x01\x04\x00\x10\x4a\x00\x01\x10\x10\x22\x00\x01\x04\x10\x47" \
-	b"\x00\x10\xbc\x32\x9e\x00\x1d\xd8\x11\xb2\x86\x01\xec\x43\xf6\x05" \
-	b"\xa4\xbc\x10\x20\x00\x06\xec\x43\xf6\x05\xa4\xbc\x10\x1a\x00\x10" \
-	b"\x1c\x41\x94\x15\x8e\xc7\xc9\x67\x27\x88\x9b\x29\xc2\x2f\xe6\x03" \
-	b"\x10\x32\x00\xc0\x04\x55\xf6\xcd\x2e\xc6\x4a\xdc\xd2\x81\x30\x3a" \
-	b"\xbe\xd2\x7d\x58\x45\x73\x0a\x67\x3a\x2e\xbb\x1a\xa9\xfa\x35\xdf" \
-	b"\xb8\xef\x19\x99\xf7\xca\xfe\x50\x86\x84\x43\xea\xab\x32\x70\x14" \
-	b"\xf8\x78\x66\x5a\x70\xdd\x96\xb7\x51\x1c\xfc\xd8\x0e\x31\x1a\x21" \
-	b"\x25\x64\x33\xc5\xc8\xae\x8d\x8c\x53\x2f\x9e\x97\x5e\x20\x8c\x59" \
-	b"\x27\x89\xc7\xa6\x5d\xbc\x9d\x0b\x3c\xb3\xaa\x25\x5b\xc4\x58\xd5" \
-	b"\x7d\x1a\xfc\xca\x04\xce\x2a\x49\xe9\xfa\x62\x44\x48\x4f\xf2\x63" \
-	b"\x44\x26\x2e\xce\x67\xdd\xc5\x1f\xc4\x2f\xf6\x8d\x92\xcd\x80\x35" \
-	b"\x5c\xc7\x95\x0e\xeb\x45\x4a\x66\xeb\xf3\x8f\x27\xf8\x10\x21\xbb" \
-	b"\x5d\x38\x2b\x71\xb1\xf4\xb1\x77\x18\xf9\xf2\xb4\x9b\xc8\xa4\x8a" \
-	b"\xe6\x61\x9d\x5a\xd6\xb0\x93\x8e\x77\xef\x65\xa7\xf9\x0e\xb1\xd0" \
-	b"\x0b\x84\xa5\x10\xc2\xfd\x91\xa2\x26\xb8\x4e\x27\x4a\x46\xac\x13" \
-	b"\x7e\x22\x48\x29\x10\x04\x00\x02\x00\x3f\x10\x10\x00\x02\x00\x0f" \
-	b"\x10\x0d\x00\x01\x01\x10\x08\x00\x02\x00\x84\x10\x44\x00\x01\x02" \
-	b"\x10\x21\x00\x18\x52\x61\x6c\x69\x6e\x6b\x20\x54\x65\x63\x68\x6e" \
-	b"\x6f\x6c\x6f\x67\x79\x2c\x20\x43\x6f\x72\x70\x2e\x10\x23\x00\x1c" \
-	b"\x52\x61\x6c\x69\x6e\x6b\x20\x57\x69\x72\x65\x6c\x65\x73\x73\x20" \
-	b"\x41\x63\x63\x65\x73\x73\x20\x50\x6f\x69\x6e\x74\x10\x24\x00\x06" \
-	b"\x52\x54\x32\x38\x36\x30\x10\x42\x00\x08\x31\x32\x33\x34\x35\x36" \
-	b"\x37\x38\x10\x54\x00\x08\x00\x06\x00\x50\xf2\x04\x00\x01\x10\x11" \
-	b"\x00\x09\x52\x61\x6c\x69\x6e\x6b\x41\x50\x53\x10\x3c\x00\x01\x01" \
-	b"\x10\x02\x00\x02\x00\x00\x10\x12\x00\x02\x00\x00\x10\x09\x00\x02" \
-	b"\x00\x00\x10\x2d\x00\x04\x80\x00\x00\x00"
-
-eap_response_identity_raw = \
-	b"\x00\x00\x0d\x00\x04\x80\x02\x00\x02\x00\x01\x00\x00\x08\x01\x3a" \
-	b"\x01\xec\x43\xf6\x05\xa4\xbc\x20\x32\x33\xe4\x3d\xd8\xec\x43\xf6" \
-	b"\x05\xa4\xbc\xf0\x00\xaa\xaa\x03\x00\x00\x00\x88\x8e\x01\x00\x00" \
-	b"\x23\x02\xf1\x00\x23\x01\x57\x46\x41\x2d\x53\x69\x6d\x70\x6c\x65" \
-	b"\x43\x6f\x6e\x66\x69\x67\x2d\x52\x65\x67\x69\x73\x74\x72\x61\x72" \
-	b"\x2d\x31\x2d\x30"
-
 
 __rt_presents = ['TSFT', 'Flags', 'Rate', 'Channel', 'FHSS', 'dBm_AntSignal',
 			   'dBm_AntNoise', 'Lock_Quality', 'TX_Attenuation',
@@ -749,7 +607,7 @@ class DOT11:
 	fragseq: DOT11_FRAG_SEQ
 
 @dataclass
-class DOT11_FIXED_PARAMETERS:
+class DOT11_FIXED_PARAMETERS_12B:
 	timestamp: int
 	intereval: float
 	capabilities: list
@@ -958,7 +816,7 @@ def RadioTap(pkt):
 		)
 	return None
 
-class Dot11:
+class Dot11_L2:
 	def __init__(self, radiotap, pkt):
 		self.radiotap = radiotap
 		self.pkt = pkt[self.radiotap.it_len:]
@@ -1075,7 +933,7 @@ class Dot11:
 				size=len(self.pkt[offset:])
 			)
 
-	def Dot11FixedParams(self):
+	def Dot11FixedParams12b(self):
 		if self.fc.type_subtype in [0x50, 0x80]:
 			offset = 24 # Skip Dot11 header
 			ts, interval, cap = struct.unpack_from('<QHH', self.pkt, offset)
@@ -1085,7 +943,7 @@ class Dot11:
 				if cap & (1 << beacon_cap_bit):
 					capabilities.append(_dot11_beacon_capabilities[beacon_cap_bit])
 			
-			return DOT11_FIXED_PARAMETERS(
+			return DOT11_FIXED_PARAMETERS_12B(
 				timestamp=ts,
 				intereval=interval,
 				capabilities=capabilities
@@ -1122,7 +980,10 @@ class Dot11:
 			TAG_ID   = wps_vendor_extension_tlv_data[offset]
 			TAG_LEN  = wps_vendor_extension_tlv_data[offset +1]
 			TAG_INFO = wps_vendor_extension_tlv_data[offset +2:offset+2+TAG_LEN]
-
+			
+			if TAG_LEN >= wps_vendor_extension_tlv_data_len:
+				break
+			
 			tags.append(DOT11_WPS_IE(
 				tag_len=TAG_LEN,
 				tag_type=ID_NAME(
@@ -1160,6 +1021,9 @@ class Dot11:
 			TAG_LEN  = struct.unpack_from('>H', data[offset+2:offset+4])[0]
 			TAG_INFO = data[offset+4:offset+4+TAG_LEN]
 			handler  = handlers.get(TAG_ID, self._dot11decode_default)
+
+			if TAG_LEN >= size:
+				break
 
 			result.append(DOT11_WPS_IE(
 				tag_len=TAG_LEN,
@@ -1521,8 +1385,259 @@ class Dot11:
 					length=length,
 					data=handler(data)
 				)
-			
+
 		return None
 
-w = Dot11(RadioTap(eap_response_identity_raw), eap_response_identity_raw)
-pprint.pprint(w.Dot11EAPOL())
+class Dot11:
+	def __init__(self, pkt):
+		self.RadioTap = RadioTap(pkt)
+		self.Dot11 = Dot11_L2(self.RadioTap, pkt)
+
+######################
+#   PacketBuilder    #
+######################
+class PacketBuilder(IEEE80211_DEFS, IEEE80211_Utils):
+	def __init__(self):
+		pass
+	
+	def RadioTap_Channel(self, channel, flags=None):
+		if flags:
+			flags = self.makeFlagsField(self.ieee80211_radiotap_channel_flags_names, flags)
+		else:
+			flags = 0x0000;
+		
+		return int.from_bytes(struct.pack('<HH', channel, flags), 'little')
+
+	def RadioTap(self, it_pad=0x00, it_presents=None):
+		packet = bytearray()
+		presents = bytearray()
+		
+		# RadioTap header - Version (0x00), Padding, Length, Presents (to many)
+		packet.extend(struct.pack('<BB', 0x00, it_pad))
+		_it_presents = 0x00000000
+		
+		if it_presents:
+			offset = 8
+
+			for present, _ in it_presents.items():
+				present_index = self.getKeyByVal(self.ieee80211_radiotap_presents_names, present)
+				if present_index:
+					_it_presents |= (1 << present_index)
+
+			for bit in range(16):
+				if (_it_presents & (1 << bit)):
+					present_chunk = bytearray()
+					name = self.ieee80211_radiotap_presents_names.get(bit, None)
+					value = it_presents.get(name)
+					
+					sa = self.ieee80211_radiotap_presents_sizes_aligns[bit]
+					align = sa.get('align', 1)
+					size = sa.get('size', 1)
+
+					# Fucked stupid agliements blyatt
+					if offset % align != 0:
+						padding = align - (offset % align)
+						present_chunk.extend(b'\x00' * padding)
+						offset += padding
+					# 1: 'b' if signed else 'B', 2: 'h' if signed else 'H', 4: 'i' if signed else 'I', 8: 'q' if signed else 'Q'
+					fmt = self.get_struct_format(size, signed=value < 0)
+					present_chunk.extend(struct.pack(f'<{fmt}', value))
+					offset += size
+					presents.extend(bytes(present_chunk))
+
+		it_len = len(presents) + 8
+		packet.extend(struct.pack('<H', it_len))
+		packet.extend(struct.pack('<I', _it_presents))
+		packet.extend(bytes(presents))
+
+		return bytes(packet)
+
+
+	def Dot11(self, fc, addr1, addr2=None, addr3=None, addr4=None, duration=0, frag=None, seq=None, fcflags=None, QoSControl=0x00, wep_iv=None, tkip_iv=None, ccmp_iv=None, ht_control=None):
+		duration = (duration >> 1) & 0x7FFF
+		packet = bytearray()
+		flags = 0x00
+
+		if fcflags:
+			flags = self.makeFlagsField(self.ieee80211_fc_flags, fcflags)
+
+		packet.extend(struct.pack('<BBH6s', fc, flags, duration, self.mac2bin(addr1)))
+		if addr2:
+			packet.extend(struct.pack('<6s', self.mac2bin(addr2)))
+		if addr3:
+			packet.extend(struct.pack('<6s', self.mac2bin(addr3)))
+		if addr4:
+			packet.extend(struct.pack('<6s', self.mac2bin(addr4)))
+		
+		if not frag is None and not seq is None:
+			frag_seq = (seq << 4) | frag
+			packet.extend(struct.pack('<H', frag_seq))
+
+		if fc in [0x88, 0x98, 0xA8, 0xB8, 0xC8, 0xE8, 0xF8]:
+			packet.extend(struct.pack('<H', QoSControl))
+
+		if not ht_control is None:
+			packet.extend(struct.pack('<I', ht_control))
+
+		if not wep_iv is None:
+			packet.extend(struct.pack('<I', wep_iv))
+
+		if not tkip_iv is None:
+			packet.extend(struct.pack('<Q', tkip_iv))
+
+		if not ccmp_iv is None:
+			packet.extend(struct.pack('<Q', ccmp_iv))
+
+		return bytes(packet)
+
+	def Dot11Beacon(self, timestamp=0, beacon_interval=0.00001, capabilities=0x0000):
+		packet = bytearray()
+		_capabilities = self.makeFlagsField(self.ieee80211_capabilities, capabilities)
+		packet.extend(struct.pack('<Q', timestamp))
+		packet.extend(struct.pack('<H', int(beacon_interval * 1000000 / 1024)))
+		packet.extend(struct.pack('<H', _capabilities))
+		
+		return bytes(packet)
+	
+	def Dot11Auth(self, algoritm=0, seq=0, status_code=0):
+		packet = bytearray()
+		packet.extend(struct.pack('<H', algoritm))
+		packet.extend(struct.pack('<H', seq))
+		packet.extend(struct.pack('<H', status_code))
+
+		return bytes(packet)
+
+	def Dot11Deauth(self, reason_code=0):
+		packet = bytearray()
+		packet.extend(struct.pack('<H', reason_code))
+
+		return bytes(packet)
+
+	def Dot11Disassoc(self, reason_code=0x0000):
+		packet = bytearray()
+		packet.extend(struct.pack('<H', reason_code))
+
+		return bytes(packet)
+
+	def Dot11AssocReq(self, capabilities=0x0000, listen_interval=0):
+		packet = bytearray()
+		packet.extend(struct.pack('<H', capabilities))
+		packet.extend(struct.pack('<H', listen_interval))
+
+		return bytes(packet)
+
+	def dot11AssocResp(self, capabilities=0x0000, status_code=0x0000, assoc_id=0x0000):
+		packet = bytearray()
+		_capabilities = self.makeFlagsField(self.ieee80211_capabilities, capabilities)
+		packet.extend(struct.pack('<H', _capabilities))
+		packet.extend(struct.pack('<H', status_code))
+		packet.extend(struct.pack('<H', (assoc_id & 0x3FFF)))
+
+		return bytes(packet)
+	
+	def Dot11ReassocReq(self, current_ap, capabilities=0x0000, listen_interval=0):
+		packet = bytearray()
+		_capabilities = self.makeFlagsField(self.ieee80211_capabilities, capabilities)
+		packet.append(struct.pack('<H', _capabilities))
+		packet.append(struct.pack('<H', listen_interval))
+		packet.append(struct.pack('<H6s', self.mac2bin(current_ap)))
+
+		return bytes(packet)
+	
+	def Dot11ReassocResp(self, capabilities=0x0000, status_code=0x0000, assoc_id=0x0000):
+		packet = bytearray()
+		_capabilities = self.makeFlagsField(self.ieee80211_capabilities, capabilities)
+		packet.extend(struct.pack('<H', _capabilities))
+		packet.extend(struct.pack('<H', status_code))
+		packet.extend(struct.pack('<H', (assoc_id & 0x3FFF)))
+
+		return bytes(packet)
+		
+	def Dot11ProbeReq(self):
+		pass
+	
+	def Dot11ProbeResp(self, timestamp=0, beacon_interval=0x0000,  capabilities=None):
+		packet = bytearray()
+		_capabilities = self.makeFlagsField(self.ieee80211_capabilities, capabilities)
+		packet.extend(struct.pack('<Q', timestamp))
+		packet.extend(struct.pack('<H', beacon_interval))
+		packet.extend(struct.pack('<H', _capabilities))
+		
+		return bytes(packet)
+
+	def Dot11TLV16(self, id, info):
+		packet = bytearray()
+		packet.extend(struct.pack('>H', id))
+		packet.extend(struct.pack('>H', len(info)))
+		packet.extend(info)
+
+		return bytes(packet)
+
+	def Dot11TLV(self, id, info):
+		packet = bytearray()
+		packet.extend(struct.pack('<B', id))
+		packet.extend(struct.pack('<B', len(info)))
+		packet.extend(info)
+	
+		return bytes(packet)
+		
+	def LLC_SNAP(self, oui, control, code):
+		packet = bytearray()
+		packet.extend(b'\xAA\xAA') # LLC / DSAP, SSAP = SNAP
+		packet.extend(struct.pack('>B', control)) # Fucking control, fucking understand 
+		packet.extend(struct.pack('<3s', self.mac2bin(oui)))
+		packet.extend(struct.pack('>H', code))
+
+		return bytes(packet)
+		
+	def EAPOL(self, version, type, length):
+		packet = bytearray()
+		packet.extend(struct.pack('>B', version))
+		packet.extend(struct.pack('>B', type))
+		packet.extend(struct.pack('>H', length))
+
+		return bytes(packet)
+	
+	def EAPOL_HandShake(self, key_desc, key_info, key_len, replay_counter, nonce, iv, rsc, id, mic, wpa_data=None):
+		packet = bytearray()
+		packet.extend(struct.pack('>B', key_desc))
+		packet.extend(struct.pack('>H', key_info))
+		packet.extend(struct.pack('>H', key_len))
+		packet.extend(struct.pack('>Q', replay_counter))
+		packet.extend(struct.pack('>32s', nonce))
+		packet.extend(struct.pack('>16s', iv))
+		packet.extend(struct.pack('>Q', rsc))
+		packet.extend(struct.pack('>Q', id))
+		packet.extend(struct.pack('>16s', mic))
+
+		if wpa_data:
+			wpa_len = len(wpa_data)
+		else:
+			wpa_len = 0
+		packet.extend(struct.pack('>H', wpa_len))
+		
+		if wpa_data:
+			packet.extend(wpa_data)
+
+		return bytes(packet)
+	
+	def EAP(self, code, id, type, data):
+		packet = bytearray()
+		length = 5 + len(data)
+
+		packet.extend(struct.pack('>B', code))
+		packet.extend(struct.pack('>B', id))
+		packet.extend(struct.pack('>H', length))
+		packet.extend(struct.pack('>B', type))
+		packet.extend(data)
+
+		return bytes(packet)
+	
+	def EAP_EXPANDED(self, vendor_id, vendor_type, opcode, flags=0x00):
+		packet = bytearray()
+		packet.extend(struct.pack('>3s', self.mac2bin(vendor_id)))
+		packet.extend(struct.pack('>I', vendor_type))
+		packet.extend(struct.pack('>B', opcode))
+		packet.extend(struct.pack('>B', flags))
+
+		return bytes(packet)

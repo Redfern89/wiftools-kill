@@ -986,8 +986,11 @@ class Dot11EltParsers(IEEE80211_DEFS, IEEE80211_Utils):
 		return rates
 	
 	def parse_ds(self, data):
-		return DS_PARAMETER(channel=data[0])
-	
+		if len(data) > 0:
+			return DS_PARAMETER(channel=data[0])
+
+		return None
+
 	def parse_country_info(self, country_info):
 		if len(country_info) < 3:
 			return None
@@ -1121,61 +1124,98 @@ class Dot11EltParsers(IEEE80211_DEFS, IEEE80211_Utils):
 		wps_ie_len = len(wps)
 		result = []
 		
-		while (offset +4 <= wps_ie_len):
+		# 1. Проверяем, хватает ли данных хотя бы на заголовок TAG(2) + LEN(2)
+		while (offset + 4 <= wps_ie_len):
 			TAG = struct.unpack('>H', wps[offset:offset+2])[0]
 			LEN = struct.unpack('>H', wps[offset+2:offset+4])[0]
-			INFO = wps[offset +4:offset+4+LEN]
 			
-			if TAG == 0x1049:
-				vendor_ext_offset = 0
-				vendor_id = INFO[:3]
-				vendor_ext_data = INFO[3:]
-				vendor_ext_data_len = len(vendor_ext_data)
-				vendor_extensions = []
-				
-				if vendor_id == self.wfa_vendor_id:
-					while (vendor_ext_offset +2 <= vendor_ext_data_len):
-						vendor_ext_TAG = vendor_ext_data[vendor_ext_offset]
-						vendor_ext_LEN = vendor_ext_data[vendor_ext_offset +1]
-						vendor_ext_DATA = vendor_ext_data[vendor_ext_offset+2:vendor_ext_offset+2+vendor_ext_LEN]
-							
-						vendor_extensions.append(WPS_WFA(
-							ID=vendor_ext_TAG,
-							LEN=vendor_ext_LEN,
-							name=self.wps_wfa_struct.get(vendor_ext_TAG, None),
-							INFO=vendor_ext_DATA
-							)
-						)
-						vendor_ext_offset += 2 + vendor_ext_LEN
-					INFO=VENDOR_EXTENSION(ID=self.mac2str(vendor_id), extensions=vendor_extensions)
+			# 2. Безопасное извлечение INFO (защита от слишком большой LEN в пакете)
+			info_start = offset + 4
+			info_end = info_start + LEN
+			
+			# Если заявленная длина больше остатка данных — обрезаем по факту
+			if info_end > wps_ie_len:
+				INFO = wps[info_start:]
+			else:
+				INFO = wps[info_start:info_end]
+
+			#print(f'[DD] parsewps: {TAG:04X} (len: {LEN})')
+			
+			if TAG == 0x1049: # Vendor Extension
+				# 3. Проверяем, что в INFO есть хотя бы 3 байта для Vendor ID
+				if len(INFO) >= 3:
+					vendor_id = INFO[:3]
+					vendor_ext_data = INFO[3:]
+					vendor_ext_data_len = len(vendor_ext_data)
+					vendor_ext_offset = 0
+					vendor_extensions = []
 					
+					if vendor_id == self.wfa_vendor_id:
+						# 4. Безопасный разбор вложенных Vendor Ext (T[1] + L[1])
+						while (vendor_ext_offset + 2 <= vendor_ext_data_len):
+							ve_tag = vendor_ext_data[vendor_ext_offset]
+							ve_len = vendor_ext_data[vendor_ext_offset + 1]
+							
+							ve_data_start = vendor_ext_offset + 2
+							ve_data_end = ve_data_start + ve_len
+							
+							# Опять же, проверяем границы для данных расширения
+							ve_info = vendor_ext_data[ve_data_start:ve_data_end]
+							
+							vendor_extensions.append(WPS_WFA(
+								ID=ve_tag,
+								LEN=ve_len,
+								name=self.wps_wfa_struct.get(ve_tag, "Unknown"),
+								INFO=ve_info
+							))
+							
+							# Важно: если ve_len будет 0, мы всё равно сдвинемся на 2 байта
+							vendor_ext_offset = ve_data_end
+							
+						INFO = VENDOR_EXTENSION(
+							ID=self.mac2str(vendor_id), 
+							extensions=vendor_extensions
+						)
+			
 			result.append(WPS_IE(
 				ID=TAG,
-				name=self.wps_tlv_struct.get(TAG, 0),
+				name=self.wps_tlv_struct.get(TAG, "Unknown"),
 				INFO=INFO
-				)
-			)
+			))
 			
-			offset += 4 + LEN
+			# 5. Двигаем основной оффсет. 
+			# Если LEN кривой, гарантируем сдвиг хотя бы на 4, чтобы не зациклиться
+			offset += 4 + max(0, LEN)
 			
 		return result
 
 	def vendor_specific(self, vendor_specific):
-		if len(vendor_specific) < 4:
-			return
+		# Минимальный заголовок: OUI(3) + Type(1)
+		if not vendor_specific or len(vendor_specific) < 4:
+			return None
 		
 		vendor_oui = vendor_specific[:3]
 		vendor_type = vendor_specific[3]
 		vendor_data = vendor_specific[4:]
-		vendor_name = self.vendor_specific_types.get(vendor_type, 0)
+		vendor_name = self.vendor_specific_types.get(vendor_type, "Unknown")
 		
-		if vendor_oui == self.ms_vendor_id:
-			if vendor_type == 1:
+		# 6. Важно: проверка OUI должна быть через bytes (напр. b'\x00P\xf2')
+		if vendor_oui == b'\x00\x50\xf2':
+			#print(self.mac2str(vendor_oui), vendor_type)
+			if vendor_type == 0x01: # WPA IE
 				vendor_data = self.parse_wpa(vendor_data)
-			if vendor_type == 4:
+			elif vendor_type == 0x04: # WPS IE
+				if vendor_oui != b'\x00\x50\xf2':
+					print('FAIL')
 				vendor_data = self.parse_wps(vendor_data)
-		
-		return VENDOR_SPECIFIC_IE(oui=self.mac2str(vendor_oui), type=vendor_type, name=vendor_name, data=vendor_data)
+
+		return VENDOR_SPECIFIC_IE(
+			oui=self.mac2str(vendor_oui), 
+			type=vendor_type, 
+			name=vendor_name, 
+			data=vendor_data
+		)
+
 
 	def default(self, val):
 		return val
@@ -1648,6 +1688,9 @@ class Dot11Parser(IEEE80211_DEFS, IEEE80211_Utils):
 				INFO = pkt[offset+2:offset+2+LEN]
 				handler = handlers.get(ID, elt_parsers.default)
 				name = self.elt_tags_struct.get(ID, 0)
+
+				if LEN >= packet_length:
+					break
 
 				result.append(Dot11EltIE(ID=ID, name=name, LEN=LEN, INFO=handler(INFO)))
 

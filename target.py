@@ -751,7 +751,7 @@ class DeauthDialog(QDialog):
 					
 					if self.first_beacon_flag:
 						beacons_seq_delta = dot11.seq - self.prev_beacon_sn 
-						if beacons_seq_delta > 0:
+						if beacons_seq_delta > 1:
 							self.lost_beacons += beacons_seq_delta
 
 					self.prev_beacon_sn = dot11.seq
