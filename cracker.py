@@ -886,10 +886,10 @@ class WiFiManager(QMainWindow):
 					self.safe_update_ap_item_by_bssid(bssid, 4, str(enc_type))    # Обновляем тип шифрования
 					self.safe_update_ap_item_by_bssid(bssid, 5, str(unicast_pair_suites)) # Обновляем парные шифры
 					self.safe_update_ap_item_by_bssid(bssid, 6, str(akm_suites))  # Обновляем шифры аутентификации
-					self.safe_update_ap_item_by_bssid(bssid, 7, str(wps_version))  # Обновляем WPS
+					self.safe_update_ap_item_by_bssid(bssid, 7, str(wps_version)) # Обновляем WPS
 					self.safe_update_ap_item_by_bssid(bssid, 8, str(beacons))     # Обновляем маяки
-					self.safe_update_ap_role_by_bssid(bssid, 2, 7, wps_role)
-					self.safe_update_ap_role_by_bssid(bssid, 3, 7, wps_version)
+					self.safe_update_ap_role_by_bssid(bssid, 4, 7, wps_role)
+					self.safe_update_ap_role_by_bssid(bssid, 5, 7, wps_version)
 				else:
 					ap_info = {
 						"BSSID": bssid.upper(),
