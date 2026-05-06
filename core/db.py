@@ -3,7 +3,10 @@ import sqlite3
 class Database:
 	def __init__(self):
 		# Сразу подключаемся при создании объекта
-		self.connection = sqlite3.connect('resources/db/wifi_scanner.db')
+		self.connection = sqlite3.connect(
+			'resources/db/wifi_scanner.db',
+			check_same_thread=False
+		)
 		self.init_tables()
 
 	def execute_write(self, query, params=None):
@@ -59,16 +62,36 @@ class Database:
 		self.connection.commit()
 		return ap_id
 
-	def insert_handshake(self, bssid, sta, eapol_data, message_type):
-		ap_id = self.get_ap_id(bssid)
-		if not self.sta_exists(ap_id, sta):
-			self.execute_write('''
-				INSERT INTO stations (ap_id, sta, eapol, message_type) 
-				VALUES (?, ?, ?, ?);
-			''', (ap_id, sta, eapol_data, message_type))
+	def insert_ap(self, bssid: str, beacon_data: bytes) -> int:
+		# 1. Пытаемся найти существующий ID
+		cursor = self.execute_read('SELECT id FROM access_points WHERE bssid = ? LIMIT 1;', (bssid,))
+		result = cursor.fetchone()
+		if result:
+			return result[0]
+
+		# 2. Если не нашли, вставляем новую запись
+		# Используем сырой курсор, чтобы сразу забрать lastrowid до коммита
+		cursor = self.connection.cursor()
+		cursor.execute('''
+			INSERT INTO access_points (bssid, beacon) 
+			VALUES (?, ?);
+		''', (bssid, beacon_data))
+		
+		ap_id = cursor.lastrowid
+		self.connection.commit()
+		return ap_id
+
+	def remove_sta(self, ap_id, sta):
+		self.execute_write('DELETE FROM stations WHERE ap_id = ? AND sta = ?;', (ap_id, sta))
+
+	def insert_handshake(self, ap_id, sta, eapol_data, message_type):
+		self.execute_write('''
+			INSERT INTO stations (ap_id, sta, eapol, message_type) 
+			VALUES (?, ?, ?, ?);
+		''', (ap_id, sta, eapol_data, message_type))
 
 	def get_handshake(self, ap_id, sta):
-		cursor = self.execute_read(''''
+		cursor = self.execute_read('''
 			SELECT eapol, message_type FROM stations 
 			WHERE ap_id = ? AND sta = ? LIMIT 1;
 		''', (ap_id, sta))

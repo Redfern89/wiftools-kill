@@ -1,5 +1,6 @@
 import time
 import threading
+import queue
 from core.ieee80211 import RadioTap, Dot11_Layer, Dot11PacketBuilder
 from core.misc import IEEE80211_Utils
 from core.ieee80211_hardware import IEEE80211_Hardware
@@ -364,6 +365,42 @@ class TargetPacketController(Callback):
 
 								if self.on_eapol_data_done:
 									self.on_eapol_data_done(self.beacon, ap_addr, sta_addr, self.stations[sta_addr]['eapol'])
+
+
+class DBController(Callback):
+	def __init__(self, db):
+		self.db = db
+		self.on_db_update = None
+
+		self.task_queue = queue.Queue()
+		self.worker_thread = threading.Thread(target=self.worker, daemon=True)
+		self.worker_thread.start()
+
+	def worker(self):
+		while True:
+			# Ждем появления данных в очереди
+			task = self.task_queue.get()
+			if task is None: break  # Сигнал для остановки
+			
+			func, args = task
+			try:
+				func(*args)
+			except Exception as e:
+				print(f"DB Error: {e}")
+			finally:
+				self.task_queue.task_done()
+
+	def insert_4way_handshake(self, beacon: bytes, bssid: str, sta: str, eapol_data: list):
+		# Добавляем задачу в очередь
+		self.task_queue.put((self._insert_4way_handshake, (beacon, bssid, sta, eapol_data)))
+
+	def _insert_4way_handshake(self, beacon: bytes, bssid: str, sta: str, eapol_data: list):
+		ap_id = self.db.insert_ap(bssid, beacon)
+		self.db.remove_sta(ap_id, sta)  # Удаляем старые данные по этому STA, если они были
+
+		for m, frame in enumerate(eapol_data):
+			self.db.insert_handshake(ap_id, sta, frame, f'M{m+1}')
+
 
 class PacketSender(Callback):
 	def __init__(self):

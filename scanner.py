@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QApplication
 from ui.controller import UIController
 from core.app import AppCore
 from core.pcap import PacketSniffer
-from core.controllers import PacketController, WifiManagerController, TargetPacketController, PacketSender
+from core.controllers import PacketController, WifiManagerController, TargetPacketController, PacketSender, DBController
 from core.hopper import ChannelHopper
 
 class Orchestrator:
@@ -18,6 +18,7 @@ class Orchestrator:
 		self.sniffer = PacketSniffer()
 		self.pkt_sender = PacketSender()
 		self.pkt_controller = PacketController()
+		self.db_controller = DBController(db=app_core.Database)
 		
 		self.target_controller = None
 		self.wifi_controller = None 
@@ -123,6 +124,8 @@ class Orchestrator:
 		self.target_controller.setCallback('on_eapol_received', self.signals.target_eapol_recv_signal.emit)
 		self.target_controller.setCallback('on_eapol_error', self.signals.target_eapol_error_signal.emit)
 		self.target_controller.setCallback('on_eapol_done',  self.signals.target_eapol_done_signal.emit)
+
+		self.target_controller.setCallback('on_eapol_data_done', self.db_controller.insert_4way_handshake)
 
 		self.pkt_sender.setCallback('on_send_deauth', self.sniffer.send)
 		self.pkt_sender.setCallback('on_send_deauth_done', self.signals.target_on_deauth_done_signal.emit)
