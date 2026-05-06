@@ -144,6 +144,8 @@ class IEEE80211_Utils:
 	@staticmethod
 	def handle_client(Dot11):
 		# Я ЕБАЛ БЛЯТЬ! ТУТ ВСЕ СЛОЖНО! НО Я ЭТО СДЕЛАЛ!!!!
+		ap_addr = None
+		sta_addr = None
 		if Dot11.fc.type_subtype in [0x08, 0x88]: # Data, QoS Data
 			is_multicast = int(Dot11.addrs.addr1.split(':')[0], 16) & 1
 			if not is_multicast and not 'MoreData' in Dot11.fc.flags:
@@ -161,11 +163,12 @@ class IEEE80211_Utils:
 					is_direct = Dot11.addrs.addr3 != 'ff:ff:ff:ff:ff:ff'# and is_direct # Исключаем широковещательные
 					ap_addr = Dot11.addrs.addr1 or Dot11.addrs.addr3
 					sta_addr = Dot11.addrs.addr2
-			
-				return {
-					'ap_addr': ap_addr, 
-					'sta_addr': sta_addr
-				}
+
+				if ap_addr and sta_addr:
+					return {
+						'ap_addr': ap_addr, 
+						'sta_addr': sta_addr
+					}
 		return None	
 
 

@@ -107,7 +107,7 @@ class Orchestrator:
 	def stop_all(self):
 		self.sniffer.stop()
 		self.hopper.stop()
-		self.core.Database.close()
+		#self.core.Database.close()
 
 	def switch_to_target(self, iface, bssid, channel):
 		self.stop_all()

@@ -1,6 +1,6 @@
 import threading
 import pcap
-
+import traceback
 from core.callback import Callback
 
 class PacketSniffer(Callback):
@@ -36,7 +36,7 @@ class PacketSniffer(Callback):
 
         except Exception as e:
             print(f"Error: {e}")
-            #traceback.print_exc()
+            traceback.print_exc()
 
     def send(self, data):
         if self.pHandle:
