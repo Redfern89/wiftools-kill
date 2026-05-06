@@ -117,6 +117,7 @@ class PacketController(Callback):
 
 class TargetPacketController(Callback):
 	def __init__(self, bssid=None, interface=None, channel=None):
+		self.beacon = None
 		self.first_beacon_flag = False
 		self.on_first_beacon = None
 		self.on_target_ap_update = None
@@ -241,6 +242,7 @@ class TargetPacketController(Callback):
 				self.beacons += 1
 				if not self.first_beacon_flag:
 					self.first_beacon_flag = True
+					self.beacon = raw
 					elt = Dot11.Dot11Elt()
 
 					if self.on_first_beacon:
@@ -361,7 +363,7 @@ class TargetPacketController(Callback):
 									self.on_eapol_done(sta_addr)
 
 								if self.on_eapol_data_done:
-									self.on_eapol_data_done(sta_addr, self.stations[sta_addr]['eapol'])
+									self.on_eapol_data_done(self.beacon, ap_addr, sta_addr, self.stations[sta_addr]['eapol'])
 
 class PacketSender(Callback):
 	def __init__(self):
