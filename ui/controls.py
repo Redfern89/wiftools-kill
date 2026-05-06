@@ -102,7 +102,7 @@ class Controls:
 				return row
 		return -1
 
-	def update_item_role(self, baseModel: QStandardItemModel, field: any, col: any, search_role_index: int, search_role_val: any, set_role_index: int, set_role_val: any):
+	def update_item_role(self, baseModel: QStandardItemModel, col: any, search_role_index: int, search_role_val: any, set_role_index: int, set_role_val: any):
 		row = self.find_row_by_userrole(
 			baseModel=baseModel,
 			col=col,

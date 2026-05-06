@@ -277,13 +277,6 @@ class ScannerWindow(QMainWindow, Controls):
 
 			self.core.UISignals.show_target_signal.emit(self.interface, bssid, int(channel))
 
-	def find_row_by_userrole(self, moidel: QStandardItemModel, col: int, role_num: int, role_val: any) -> int:
-		for row in range(moidel.rowCount()):
-			item = moidel.item(row, col)
-			if item and item.data(Qt.UserRole + role_num) == role_val:
-				return row
-		return -1
-
 	def update_col_by_row(self, model: QStandardItemModel, row: int, col: int, val: str):
 		item = model.item(row, col)
 		if item:
@@ -348,10 +341,25 @@ class ScannerWindow(QMainWindow, Controls):
 		self.access_points_table.setRowHeight(self.access_points_table_model.rowCount() - 1, 40)
 
 	def update_ap(self, bssid, ap_data):
-		row = self.find_row_by_userrole(self.access_points_table_model, 0, 2, bssid)
+		row = self.find_row_by_userrole(
+			baseModel=self.access_points_table_model,
+			col=0,
+			value=bssid,
+			role_index=2
+		)
 		self.update_col_by_row(self.access_points_table_model, row, 1, str(ap_data['channel_data']['ch']))
 		self.update_col_by_row(self.access_points_table_model, row, 3, str(ap_data['rssi']))
 		self.update_col_by_row(self.access_points_table_model, row, 8, str(ap_data['beacons']))
+
+	def set_ap_saved(self, bssid: str):
+		self.update_item_role(
+			baseModel=self.access_points_table_model,
+			col=0,
+			search_role_index=2,
+			search_role_val=bssid,
+			set_role_index=3,
+			set_role_val='SAVED'
+		)
 
 	def has_nested_exists(self, row):
 		for col in range(self.access_points_table_model.columnCount()):
@@ -363,7 +371,12 @@ class ScannerWindow(QMainWindow, Controls):
 		return False
 
 	def add_sta(self, ap_addr, sta_addr, sta_data):
-		row = self.find_row_by_userrole(self.access_points_table_model, 0, 2, ap_addr)
+		row = self.find_row_by_userrole(
+			baseModel=self.access_points_table_model,
+			col=0,
+			value=ap_addr,
+			role_index=2
+		)
 		if row != -1:
 			if not self.has_nested_exists(row +1):
 				subitem = QStandardItem("")
@@ -383,7 +396,12 @@ class ScannerWindow(QMainWindow, Controls):
 				self.access_points_table.setRowHeight(row +1, 103)
 	
 	def update_sta(self, ap_addr, sta_addr, sta_data):
-		row = self.find_row_by_userrole(self.access_points_table_model, 0, 2, ap_addr)
+		row = self.find_row_by_userrole(
+			baseModel=self.access_points_table_model,
+			col=0,
+			value=ap_addr,
+			role_index=2
+		)
 		if row != -1:
 			if self.has_nested_exists(row +1):
 				subitem_index = self.access_points_table_model.index(row + 1, 0)

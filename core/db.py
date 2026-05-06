@@ -53,6 +53,23 @@ class Database:
 	def sta_exists(self, ap_id, sta):
 		cursor = self.execute_read('SELECT 1 FROM stations WHERE ap_id = ? AND sta = ? LIMIT 1;', (ap_id, sta))
 		return cursor.fetchone() is not None
+	
+	def row_exists(self, table: str, field: str, value: any) -> bool:
+		query = f'SELECT 1 FROM {table} WHERE {field} = ? LIMIT 1'
+		cursor = self.execute_read(query, (value,))
+
+		return cursor.fetchone() is not None
+	
+	def get_row(self, table: str, field: str, value: any) -> dict:
+		query = f'SELECT * FROM {table} WHERE {field} = ? LIMIT 1'
+		cursor = self.execute_read(query, (value,))
+		row = cursor.fetchone()
+
+		if row:
+			columns = [column[0] for column in cursor.description]
+			return dict(zip(columns, row))
+		
+		return None
 
 	def get_ap_id(self, bssid):
 		cursor = self.execute_read('SELECT id FROM access_points WHERE bssid = ? LIMIT 1;', (bssid,))

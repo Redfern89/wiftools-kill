@@ -453,7 +453,6 @@ class DeauthDialog(QDialog, Controls):
 		
 		self.update_item_role(
 			baseModel=self.stations_table_model,
-			field=sta_addr,
 			col=0,
 			search_role_index=0,
 			search_role_val=sta_addr,
