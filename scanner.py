@@ -5,7 +5,13 @@ from PyQt5.QtWidgets import QApplication
 from ui.controller import UIController
 from core.app import AppCore
 from core.pcap import PacketSniffer
-from core.controllers import PacketController, WifiManagerController, TargetPacketController, PacketSender, DBController
+from core.controllers import (
+    PacketController,
+    WifiManagerController,
+    TargetPacketController,
+    PacketSender,
+    DBController
+)
 from core.hopper import ChannelHopper
 
 class Orchestrator:
