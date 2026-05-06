@@ -19,9 +19,9 @@ class WiFiManager(QDialog, Controls):
 		self.setWindowTitle(self.core.Translations.gettext('wifiman_window_title'))
 		self.setWindowIcon(QIcon('resources/icons/ethernet.png'))
 
-		self.table = QTableView(self)
-		self.model = QStandardItemModel(0, 7, self)
-		self.model.setHorizontalHeaderLabels([
+		self.phys_table = QTableView(self)
+		self.phys_table_model = QStandardItemModel(0, 7, self)
+		self.phys_table_model.setHorizontalHeaderLabels([
 			self.core.Translations.gettext('list_col_phy'),
 			self.core.Translations.gettext('list_col_interface'),
 			self.core.Translations.gettext('list_col_mac'),
@@ -31,22 +31,22 @@ class WiFiManager(QDialog, Controls):
 			self.core.Translations.gettext('list_col_mode')
 		])
 
-		self.table.setModel(self.model)
-		self.table.horizontalHeader().setStretchLastSection(True)
-		self.table.setEditTriggers(QTableView.NoEditTriggers)
-		self.table.setShowGrid(False)
-		self.table.verticalHeader().setVisible(False)
-		self.table.setSelectionBehavior(QTableView.SelectRows)
-		self.table.setIconSize(QSize(32, 32))
-		self.table.selectionModel().selectionChanged.connect(self.on_selection_changed)
-		self.table.setItemDelegateForColumn(2, MACDeligate(self.table))
-		self.table.doubleClicked.connect(self.select_iface)
+		self.phys_table.setModel(self.phys_table_model)
+		self.phys_table.horizontalHeader().setStretchLastSection(True)
+		self.phys_table.setEditTriggers(QTableView.NoEditTriggers)
+		self.phys_table.setShowGrid(False)
+		self.phys_table.verticalHeader().setVisible(False)
+		self.phys_table.setSelectionBehavior(QTableView.SelectRows)
+		self.phys_table.setIconSize(QSize(32, 32))
+		self.phys_table.selectionModel().selectionChanged.connect(self.on_selection_changed)
+		self.phys_table.setItemDelegateForColumn(2, MACDeligate(self.phys_table))
+		self.phys_table.doubleClicked.connect(self.select_iface)
 
 		# Настройки ширины колонок
 		col_widths = [90, 150, 150, None, 350, None, None]
 		for i, width in enumerate(col_widths):
 			if width:
-				self.table.setColumnWidth(i, width)
+				self.phys_table.setColumnWidth(i, width)
 
 		# Кнопки
 		self.btn_refresh = self.create_button(
@@ -91,23 +91,16 @@ class WiFiManager(QDialog, Controls):
 		# Основной layout
 		main_layout = QVBoxLayout()
 		main_layout.addLayout(top_layout)
-		main_layout.addWidget(self.table)
+		main_layout.addWidget(self.phys_table)
 		self.setLayout(main_layout)
 
 		self.compare_timer = QTimer()
 		self.compare_timer.setInterval(1000)
 		self.compare_timer.timeout.connect(self.core.UISignals.request_phys_signal.emit)
 		self.compare_timer.start()
-
-	def _get_selected_row(self):
-		indexes = self.table.selectionModel().selectedIndexes()
-		return indexes[0].row() if indexes else None
-
-	def _get_value(self, row, column, role=Qt.DisplayRole):
-		return self.model.data(self.model.index(row, column), role)
 	
 	def on_selection_changed(self, selected: QItemSelection, deselected: QItemSelection):
-		row = self._get_selected_row()
+		row = self.get_table_selected_row(self.phys_table)
 
 		if row is None:
 			self.btn_down.setEnabled(False)
@@ -115,8 +108,8 @@ class WiFiManager(QDialog, Controls):
 			self.btn_mode.setEnabled(False)
 			return
 
-		state = self._get_value(row, 5, Qt.DisplayRole).lower()
-		mode = self._get_value(row, 6, Qt.DisplayRole).lower()
+		state = self.get_item_value(self.phys_table_model, row, 5, Qt.DisplayRole).lower()
+		mode = self.get_item_value(self.phys_table_model, row, 6, Qt.DisplayRole).lower()
 		
 		self.btn_mode.setEnabled(True)
 
@@ -133,14 +126,14 @@ class WiFiManager(QDialog, Controls):
 			self.btn_down.setEnabled(False)
 
 	def select_iface(self):
-		row = self._get_selected_row()
+		row = self.get_table_selected_row(self.phys_table)
 		if row is None:
 			return
 
-		phy = self._get_value(row, 0).lower()
-		iface = self._get_value(row, 1)
-		mac = self._get_value(row, 2, Qt.DisplayRole)
-		channels = self._get_value(row, 2, Qt.UserRole +3)
+		phy = self.get_item_value(self.phys_table_model, row, 0, Qt.DisplayRole).lower()
+		iface = self.get_item_value(self.phys_table_model, row, 1, Qt.DisplayRole)
+		mac = self.get_item_value(self.phys_table_model, row, 2, Qt.DisplayRole)
+		channels = self.get_item_value(self.phys_table_model, row, 2, Qt.UserRole +3)
 
 		self.core.UISignals.select_interface_signal.emit({
 			'phy': phy,
@@ -152,12 +145,12 @@ class WiFiManager(QDialog, Controls):
 		self.accept()
 
 	def iface_updown(self):
-		row = self._get_selected_row()
+		row = self.get_table_selected_row(self.phys_table)
 		if row is None:
 			return
 		
-		state = self._get_value(row, 5, Qt.DisplayRole).lower()
-		iface = self._get_value(row, 1)
+		state = self.get_item_value(self.phys_table_model, row, 5, Qt.DisplayRole).lower()
+		iface = self.get_item_value(self.phys_table_model, row, 1, Qt.DisplayRole)
 
 		QApplication.setOverrideCursor(Qt.WaitCursor)
 		self.core.UISignals.iface_updown_signal.emit(iface, state)
@@ -165,13 +158,13 @@ class WiFiManager(QDialog, Controls):
 		QApplication.restoreOverrideCursor()
 
 	def iface_mode_change(self):
-		row = self._get_selected_row()
+		row = self.get_table_selected_row(self.phys_table)
 		if row is None:
 			return
-		
-		mode = self._get_value(row, 6, Qt.DisplayRole).lower()
-		phy = self._get_value(row, 0).lower()
-		iface = self._get_value(row, 1)
+
+		mode = self.get_item_value(self.phys_table_model, row, 6, Qt.DisplayRole).lower()
+		phy = self.get_item_value(self.phys_table_model, row, 0, Qt.DisplayRole).lower()
+		iface = self.get_item_value(self.phys_table_model, row, 1, Qt.DisplayRole)
 
 		QApplication.setOverrideCursor(Qt.WaitCursor)
 		self.core.UISignals.change_iface_mode_signal.emit(phy, iface, mode)
@@ -181,7 +174,7 @@ class WiFiManager(QDialog, Controls):
 	def update_phys_list(self, data):
 		if data != self.phys:
 			self.phys = data
-			self.model.setRowCount(0)
+			self.phys_table_model.setRowCount(0)
 			
 			for phy, phydata in data.items():
 				row = []
@@ -200,8 +193,8 @@ class WiFiManager(QDialog, Controls):
 				row.append(QStandardItem('UP' if phydata['state'] else 'DOWN'))
 				row.append(QStandardItem(phydata['mode']))
 
-				self.model.appendRow(row)
-				self.table.setRowHeight(self.model.rowCount() - 1, 40)
+				self.phys_table_model.appendRow(row)
+				self.phys_table.setRowHeight(self.phys_table_model.rowCount() - 1, 40)
 	
 	def closeEvent(self, a0):
 

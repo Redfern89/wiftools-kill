@@ -189,6 +189,7 @@ class Orchestrator:
 			self.signals.request_phys_signal.connect(self._update_phys)
 		
 		self.ui.show_wifi_manager()
+		self.signals.request_phys_signal.emit()
 
 	def _update_phys(self):
 		data = self.wifi_controller.handle_phys_details()

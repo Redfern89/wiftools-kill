@@ -285,19 +285,6 @@ class DeauthDialog(QDialog, Controls):
 		palette.setColor(QPalette.Highlight, color)
 		self.rssi_progress.setPalette(palette)
 		self.rssi_progress.setFormat("%v dBm")
-
-	def find_row_by_userrole(self, value, role):
-		for row in range(self.stations_table_model.rowCount()):
-			item = self.stations_table_model.item(row, 0)
-			if item and item.data(Qt.UserRole + role) == value:
-				return row
-		return -1
-
-	def update_sta_role(self, sta_mac, role_index, role):
-		row = self.find_row_by_userrole(sta_mac, 0)
-		if row != -1:
-			item = self.stations_table_model.item(row, 0)
-			item.setData(role, Qt.UserRole + role_index)
 	
 	def log(self, type, log):
 		now = datetime.now()
@@ -418,9 +405,8 @@ class DeauthDialog(QDialog, Controls):
 			self.stations_table.setRowHeight(row_number, 40)
 
 	def update_sta(self, sta_addr, sta_data):
-		row = self.find_row_by_userrole(sta_addr, 0)
+		row = self.find_row_by_userrole(self.stations_table_model, 0, sta_addr, 0)
 		if row != -1:
-			#sta_data = self.stations[sta_addr]
 			acks_blocks = f"{sta_data['counters']['acks']} / {sta_data['counters']['blocks']}"
 			rate = f"{sta_data['rate']} MB/s"
 			channel_flags = '+'.join(sta_data['channel'].flags)
@@ -464,8 +450,16 @@ class DeauthDialog(QDialog, Controls):
 			'eapol_done_msg',
 			sta_addr=self.core.VendorOUI.get_oui_name_mixed(sta_addr)
 		))
-		self.update_sta_role(sta_addr, 1, 'EAPOL')
-		self.update_sta_role(sta_addr, 0, sta_addr)
+		
+		self.update_item_role(
+			baseModel=self.stations_table_model,
+			field=sta_addr,
+			col=0,
+			search_role_index=0,
+			search_role_val=sta_addr,
+			set_role_index=1,
+			set_role_val='EAPOL'
+		)
 
 	def eapol_error(self, sta_addr, err_message):
 		self.log('cancelled', self.core.Translations.gettext(

@@ -95,15 +95,23 @@ class Controls:
 		indexes = baseTable.selectionModel().selectedIndexes()
 		return indexes[0].row() if indexes else None
 
-	def find_row_by_userrole(self, baseModel: QStandardItemModel, value: any, role_index: int):
+	def find_row_by_userrole(self, baseModel: QStandardItemModel, col: int, value: any, role_index: int):
 		for row in range(baseModel.rowCount()):
-			item = baseModel.item(row, 0)
+			item = baseModel.item(row, col)
 			if item and item.data(Qt.UserRole + role_index) == value:
 				return row
 		return -1
 
-	def update_item_role(self, baseModel: QStandardItemModel, field: str, col: int, role_index: int, role: any):
-		row = self.find_row_by_userrole(field, 0)
+	def update_item_role(self, baseModel: QStandardItemModel, field: any, col: any, search_role_index: int, search_role_val: any, set_role_index: int, set_role_val: any):
+		row = self.find_row_by_userrole(
+			baseModel=baseModel,
+			col=col,
+			value=search_role_val,
+			role_index=search_role_index
+		)
 		if row != -1:
-			item = baseModel.item(row, 0)
-			item.setData(role, Qt.UserRole + role_index)
+			item = baseModel.item(row, col)
+			item.setData(set_role_val, Qt.UserRole + set_role_index)
+	
+	def get_item_value(self, baseModel: QStandardItemModel, row: int, column: int, role=Qt.DisplayRole):
+		return baseModel.data(baseModel.index(row, column), role)

@@ -35,5 +35,7 @@ class UISignals(QObject):
 	target_on_deauth_signal      = pyqtSignal(str, str, int) # AP Addr, STA Addr, Reason code
 	target_on_deauth_done_signal = pyqtSignal()
 
+	hahdshakes_db_show_signal    = pyqtSignal()
+
 	def __init__(self):
 		super().__init__()
