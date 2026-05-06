@@ -1,7 +1,12 @@
+import os
 import sqlite3
 
 class Database:
 	def __init__(self):
+		# Fucked directory
+		if not os.path.exists('resources/db'):
+			os.mkdir('resources/db')
+
 		# Сразу подключаемся при создании объекта
 		self.connection = sqlite3.connect(
 			'resources/db/wifi_scanner.db',
