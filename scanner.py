@@ -124,7 +124,7 @@ class Orchestrator:
 		
 		# 4. Вяжем контроллер с сигналами
 		self.target_controller.setCallback('on_target_ap_update', self.signals.update_target_ap_signal.emit)
-		self.target_controller.setCallback('on_first_beacon', self.signals.set_trget_first_data.emit)
+		self.target_controller.setCallback('on_first_beacon', self.signals.set_trget_first_data_signal.emit)
 		self.target_controller.setCallback('on_sta_found', self.signals.target_sta_found_signal.emit)
 		self.target_controller.setCallback('on_sta_update', self.signals.target_sta_update_signal.emit)
 		self.target_controller.setCallback('on_sta_probe_req', self.signals.target_sta_probe_signal.emit)
@@ -142,7 +142,7 @@ class Orchestrator:
 		# Сначала отрубаем старые связи, если они были (защита от дублей)
 		try: self.signals.update_target_ap_signal.disconnect()
 		except: pass
-		try: self.signals.set_trget_first_data.disconnect()
+		try: self.signals.set_trget_first_data_signal.disconnect()
 		except: pass
 		try: self.signals.target_sta_found_signal.disconnect()
 		except: pass
@@ -162,7 +162,7 @@ class Orchestrator:
 		except: pass
 
 		self.signals.update_target_ap_signal.connect(self.ui.target_window.update_target_ap)
-		self.signals.set_trget_first_data.connect(self.ui.target_window.set_first_data)
+		self.signals.set_trget_first_data_signal.connect(self.ui.target_window.set_first_data)
 		self.signals.target_sta_found_signal.connect(self.ui.target_window.add_sta)
 		self.signals.target_sta_update_signal.connect(self.ui.target_window.update_sta)
 		self.signals.target_sta_probe_signal.connect(self.ui.target_window.probe_request)

@@ -23,7 +23,7 @@ class UISignals(QObject):
 	close_target_signal          = pyqtSignal()
 	start_target_signal          = pyqtSignal()
 	stop_target_signal           = pyqtSignal()
-	set_trget_first_data         = pyqtSignal(dict) # AP First data
+	set_trget_first_data_signal  = pyqtSignal(dict) # AP First data
 	update_target_ap_signal      = pyqtSignal(dict) # AP Data
 	target_sta_found_signal      = pyqtSignal(dict) # STA Data
 	target_sta_update_signal     = pyqtSignal(str, dict) # STA Addr, STA Data
