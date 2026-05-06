@@ -1,0 +1,22 @@
+{
+    "lang": "RU",
+    "rename_iface": true,
+    "mon_iface_prefix": "radio",
+    "mon_iface_suffix": "mon",
+    "clear_on_scan": false,
+    "scan_method": "passive",
+    "active_scan_packets": 2,
+    "active_scan_deauth_reason": 7,
+    "hopper_type": "random",
+    "hopper_timeout": 0.4,
+    "deauth_packets": 127,
+    "deauth_attempts": 1,
+    "deauth_reason": 3,
+    "deauth_timeout": 1,
+    "deauth_from_sta": true,
+    "create_hc2200": true,
+    "main_window_x": 110,
+    "main_window_y": 58,
+    "main_window_w": 1197,
+    "main_window_h": 675
+}
