@@ -11,6 +11,7 @@ class UISignals(QObject):
 	counts_update_signal         = pyqtSignal(int, int) # ap count, sta count
 	set_ap_saved_signal          = pyqtSignal(str) # AP Addr
 	set_sta_ap_saved_signal      = pyqtSignal(str, str, str) # AP Addr, STA Addr, Date
+	request_saved_ap_sta         = pyqtSignal(str, str) # AP Addr, STA Addr
 
 	show_wifi_manager_signal     = pyqtSignal()
 	wifi_manager_created         = pyqtSignal()

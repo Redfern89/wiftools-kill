@@ -380,13 +380,13 @@ class ScannerWindow(QMainWindow, Controls):
 		)
 	
 	def set_ap_sta_saved(self, ap_addr: str, sta_addr: str, date: str):
-		print(f'[UI] Saved STA addr={sta_addr}, AP={ap_addr}, date={date}')
 		row = self.find_row_by_userrole(
 			baseModel=self.access_points_table_model,
 			col=0,
 			value=ap_addr,
 			role_index=2
 		)
+		print(f'[UI] Saved STA addr={sta_addr}, AP={ap_addr}, date={date}, row={row}')
 		if row != -1:
 			if self.has_nested_exists(row +1):
 				subitem_index = self.access_points_table_model.index(row + 1, 0)
@@ -411,7 +411,7 @@ class ScannerWindow(QMainWindow, Controls):
 			role_index=2
 		)
 		if row != -1:
-			if not self.has_nested_exists(row +1):
+			if not self.has_nested_exists(row +1):					
 				subitem = QStandardItem("")
 				sub_row = [QStandardItem("") for _ in range(self.access_points_table_model.columnCount())]
 				sub_row[0] = subitem
@@ -424,9 +424,11 @@ class ScannerWindow(QMainWindow, Controls):
 				ssid = first_item.data(Qt.UserRole +1)
 				stations_table.set_ssid(ssid)
 				stations_table.add_sta(sta_data)
-						
+
 				self.access_points_table.setIndexWidget(subitem_index, stations_table)
 				self.access_points_table.setRowHeight(row +1, 103)
+
+				self.signals.request_saved_ap_sta.emit(ap_addr, sta_addr)
 	
 	def update_sta(self, ap_addr, sta_addr, sta_data):
 		row = self.find_row_by_userrole(
