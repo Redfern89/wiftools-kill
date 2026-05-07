@@ -20,6 +20,7 @@ class PacketController(Callback):
 		self.on_counts_update = None
 
 		self.on_ap_found_bssid = None
+		self.on_sta_found_addr = None
 
 	def process_packets(self, raw, ts):
 		RadioTap_PKT = RadioTap(raw)
@@ -59,6 +60,9 @@ class PacketController(Callback):
 						
 					if self.on_sta_found:
 						self.on_sta_found(ap_addr, sta_addr, sta)
+					
+					if self.on_sta_found_addr:
+						self.on_sta_found_addr(ap_addr, sta_addr)
 				else:
 					self.access_points[ap_addr]['clients'][sta_addr]['frames'] += 1
 					self.access_points[ap_addr]['clients'][sta_addr]['rssi'] = dBm_AntSignal
@@ -376,6 +380,7 @@ class DBController(Callback):
 	def __init__(self, db):
 		self.db = db
 		self.on_saved_ap_found = None
+		self.on_saved_ap_sta_found = None
 		self.task_queue = queue.Queue()
 		
 		# Запускаем воркера
@@ -407,9 +412,25 @@ class DBController(Callback):
 
 	@async_task
 	def get_ap_db_exists(self, bssid: str):
-		ap = self.db.get_row('access_points', 'bssid', bssid)
+		ap = self.db.get_row('access_points', {
+			'bssid': bssid
+		})
 		if ap and self.on_saved_ap_found:
 			self.on_saved_ap_found(bssid)
+
+	def get_ap_sta_db_exists(self, bssid: str, sta: str) -> str:
+		ap = self.db.get_row('access_points', {
+			'bssid': bssid
+		})
+		if ap:
+			sta_data = self.db.get_row('stations', {
+				'ap_id': ap['id'],
+				'sta': sta
+			})
+			if sta_data:
+				if self.on_saved_ap_sta_found:
+					self.on_saved_ap_sta_found(bssid, sta, sta_data['date'])
+				#print(f'[CONTROLLER] STA found. AP={bssid}, STA={sta}')
 
 class PacketSender(Callback):
 	def __init__(self):

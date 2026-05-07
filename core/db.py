@@ -60,9 +60,12 @@ class Database:
 
 		return cursor.fetchone() is not None
 	
-	def get_row(self, table: str, field: str, value: any) -> dict:
-		query = f'SELECT * FROM {table} WHERE {field} = ? LIMIT 1'
-		cursor = self.execute_read(query, (value,))
+	def get_row(self, table: str, search_data: dict) -> dict:
+		conditions = " AND ".join([f"{key} = ?" for key in search_data.keys()])
+		values = tuple(search_data.values())
+		
+		query = f'SELECT * FROM {table} WHERE {conditions} LIMIT 1'
+		cursor = self.execute_read(query, values)
 		row = cursor.fetchone()
 
 		if row:

@@ -200,8 +200,8 @@ class STADelegate(QStyledItemDelegate):
 		state = index.data(Qt.UserRole)
 		mac = index.data(Qt.DisplayRole)
 		date = index.data(Qt.UserRole +1)
-		if date:
-			date = datetime.fromtimestamp(date).strftime('%d.%m.%Y %H:%M')
+		#if date:
+		#	date = datetime.fromtimestamp(date).strftime('%d.%m.%Y %H:%M')
 
 		if state == 'EAPOL_DONE':
 			painter.save()

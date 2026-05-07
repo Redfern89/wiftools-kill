@@ -8,7 +8,7 @@ from PyQt5.QtCore import Q_ARG, QMetaObject, QEvent, Qt, QSize, QItemSelection, 
 from ui.deligates import BSSIDDelegate, ProgressBarDelegate, WPSDelegate, MonoFontDelegate, STADelegate
 from ui.controls import Controls
 
-class StationsTable(QWidget):
+class StationsTable(QWidget, Controls):
 	def __init__(self, parent=None, core=None):
 		super().__init__(parent)
 		layout = QVBoxLayout(self)
@@ -75,6 +75,24 @@ class StationsTable(QWidget):
 			'assoc_sta_label',
 			ssid=ssid
 		))
+	
+	def set_sta_saved(self, sta_addr: str, date: str):
+		self.update_item_role(
+			self.sta_table_model,
+			col=0,
+			search_role_index=2,
+			search_role_val=sta_addr,
+			set_role_index=0,
+			set_role_val='EAPOL_DONE'
+		)
+		self.update_item_role(
+			self.sta_table_model,
+			col=0,
+			search_role_index=2,
+			search_role_val=sta_addr,
+			set_role_index=1,
+			set_role_val=date
+		)
 
 	def add_sta(self, sta_data):
 		sta_mac = sta_data['addrs']['client_addr'].lower()
@@ -99,6 +117,7 @@ class StationsTable(QWidget):
 			if row == -1:
 				row = []
 				mac_item = QStandardItem(QIcon('resources/icons/signal.png'), sta_addr_mixed)
+				mac_item.setData(sta_addr, Qt.UserRole +2)
 
 				row.append(mac_item)
 				row.append(QStandardItem(str(sta_data['rssi'])))
@@ -114,7 +133,6 @@ class StationsTable(QWidget):
 				self.sta_table_model.item(row, 2).setText(str(sta_data['frames']))
 				self.sta_table_model.item(row, 3).setText(rate)
 				self.sta_table_model.item(row, 4).setText(channel_flags)
-
 
 class ScannerWindow(QMainWindow, Controls):
 	def __init__(self, core=None):
@@ -360,6 +378,21 @@ class ScannerWindow(QMainWindow, Controls):
 			set_role_index=3,
 			set_role_val='SAVED'
 		)
+	
+	def set_ap_sta_saved(self, ap_addr: str, sta_addr: str, date: str):
+		print(f'[UI] Saved STA addr={sta_addr}, AP={ap_addr}, date={date}')
+		row = self.find_row_by_userrole(
+			baseModel=self.access_points_table_model,
+			col=0,
+			value=ap_addr,
+			role_index=2
+		)
+		if row != -1:
+			if self.has_nested_exists(row +1):
+				subitem_index = self.access_points_table_model.index(row + 1, 0)
+				stations_table = self.access_points_table.indexWidget(subitem_index)
+				stations_table.set_sta_saved(sta_addr, date)
+
 
 	def has_nested_exists(self, row):
 		for col in range(self.access_points_table_model.columnCount()):

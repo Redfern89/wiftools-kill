@@ -59,6 +59,7 @@ class Orchestrator:
 		self.signals.counts_update_signal.connect(win.update_counts)
 		self.signals.channel_change_signal.connect(win.on_channel_change)
 		self.signals.set_ap_saved_signal.connect(win.set_ap_saved)
+		self.signals.set_sta_ap_saved_signal.connect(win.set_ap_sta_saved)
 		
 
 	def _setup_initial_callbacks(self):
@@ -70,9 +71,12 @@ class Orchestrator:
 		self.pkt_controller.setCallback('on_sta_found', self.signals.sta_found_signal.emit)
 		self.pkt_controller.setCallback('on_sta_update', self.signals.sta_update_signal.emit)
 		self.pkt_controller.setCallback('on_counts_update', self.signals.counts_update_signal.emit)
+		
 		self.pkt_controller.setCallback('on_ap_found_bssid', self.db_controller.get_ap_db_exists)
-
+		self.pkt_controller.setCallback('on_sta_found_addr', self.db_controller.get_ap_sta_db_exists)
+		
 		self.db_controller.setCallback('on_saved_ap_found', self.signals.set_ap_saved_signal.emit)
+		self.db_controller.setCallback('on_saved_ap_sta_found', self.signals.set_sta_ap_saved_signal.emit)
 		
 		# По дефолту сниффер работает с общим контроллером пакетов
 		self.sniffer.setCallback('on_packet_received', self.pkt_controller.process_packets)
