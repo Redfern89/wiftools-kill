@@ -65,7 +65,7 @@ class PacketController(Callback):
 					if self.on_sta_found_addr:
 						pass
 						#print(f'[CONTROLLER STA_ADDR] AP={ap_addr}, STA={sta_addr}')
-						#self.on_sta_found_addr(ap_addr, sta_addr)
+						self.on_sta_found_addr(ap_addr, sta_addr)
 				else:
 					self.access_points[ap_addr]['clients'][sta_addr]['frames'] += 1
 					self.access_points[ap_addr]['clients'][sta_addr]['rssi'] = dBm_AntSignal
@@ -384,42 +384,6 @@ class DBController(Callback):
 		self.db = db
 		self.on_saved_ap_found = None
 		self.on_saved_ap_sta_found = None
-
-	def insert_4way_handshake(self, beacon: bytes, bssid: str, sta: str, eapol_data: list):
-		ap_id = self.db.insert_ap(bssid, beacon)
-		self.db.remove_sta(ap_id, sta)
-		for m, frame in enumerate(eapol_data):
-			self.db.insert_handshake(ap_id, sta, frame, f'M{m+1}')
-
-	def get_ap_db_exists(self, bssid: str):
-		ap = self.db.get_row('access_points', {
-			'bssid': bssid
-		})
-		if ap and self.on_saved_ap_found:
-			self.on_saved_ap_found(bssid)
-
-	def get_ap_sta_db_exists(self, bssid: str, sta: str) -> str:
-		print(f'[CONTROLLER] Request. AP={bssid}, STA={sta}')
-		ap = self.db.get_row('access_points', {
-			'bssid': bssid
-		})
-		if ap:
-			print(f"[AP Found] ap={ap['id']}")
-			sta_data = self.db.get_row('stations', {
-				'ap_id': ap['id'],
-				'sta': sta
-			})
-			if sta_data:
-				if self.on_saved_ap_sta_found:
-					self.on_saved_ap_sta_found(bssid, sta, sta_data['date'])
-					print(f'[CONTROLLER] Saved STA found. AP={bssid}, STA={sta}')
-
-
-'''class DBController(Callback):
-	def __init__(self, db):
-		self.db = db
-		self.on_saved_ap_found = None
-		self.on_saved_ap_sta_found = None
 		self.task_queue = queue.Queue()
 		
 		# Запускаем воркера
@@ -470,7 +434,6 @@ class DBController(Callback):
 			if sta_data:
 				if self.on_saved_ap_sta_found:
 					self.on_saved_ap_sta_found(bssid, sta, sta_data['date'])
-					#print(f'[CONTROLLER] STA found. AP={bssid}, STA={sta}')'''
 
 class PacketSender(Callback):
 	def __init__(self):

@@ -53,7 +53,7 @@ class StationsTable(QWidget, Controls):
 		self.sta_table.setColumnWidth(0, 200)  # MAC
 		self.sta_table.setColumnWidth(1, 300)  # RSSI
 		self.sta_table.setColumnWidth(2, 70)   # Frames
-		self.sta_table.setColumnWidth(3, 100)   # Rate
+		self.sta_table.setColumnWidth(3, 100)  # Rate
 		self.sta_table.setColumnWidth(4, 200)  # Modulation
 		self.sta_table.setColumnWidth(5, 100)  # Probes
 
@@ -62,13 +62,6 @@ class StationsTable(QWidget, Controls):
 		layout.addLayout(top_layout)
 		layout.addWidget(self.sta_table)
 		self.setLayout(layout)
-
-	def find_row_by_bssid(self, bssid):
-		for row in range(self.sta_table_model.rowCount()):
-			item = self.sta_table_model.item(row, 0)
-			if item and item.data(Qt.DisplayRole) == bssid:
-				return row
-		return -1
 
 	def set_ssid(self, ssid):
 		self.assocLabel.setText(self.core.Translations.gettext(
@@ -94,45 +87,60 @@ class StationsTable(QWidget, Controls):
 			set_role_val=date
 		)
 
-	def add_sta(self, sta_data):
+	def make_channel_mcs(self, sta_data):
+		rate = 0
+		if sta_data['mcs']:
+			mcs_rate = sta_data['mcs'].decoded.rate
+			modulation = sta_data['mcs'].decoded.modulation
+			coding = sta_data['mcs'].decoded.coding_rate
+
+			channel_flags = f"{'+'.join(sta_data['channel'].flags)}\nCoding: {coding}"
+			rate = f"{mcs_rate} MB/s\n{modulation}"
+		else:
+			rate = f"{sta_data['rate']} MB/s"
+			channel_flags = '+'.join(sta_data['channel'].flags)
+
+		return rate, channel_flags
+
+	def update_sta(self, sta_addr, sta_data):
 		sta_mac = sta_data['addrs']['client_addr'].lower()
 		if sta_mac:
 			sta_addr = sta_data['addrs']['client_addr']
-			sta_addr_mixed = self.core.VendorOUI.get_oui_name_mixed(sta_addr)
-			row = self.find_row_by_bssid(sta_addr_mixed)
-			ap_addr = sta_data['addrs']['ap_addr'].lower()
+			row = self.find_row_by_userrole(
+				baseModel=self.sta_table_model,
+				col=2,
+				value=sta_addr,
+				role_index=0
+			)
 
-			rate = 0
-			if sta_data['mcs']:
-				mcs_rate = sta_data['mcs'].decoded.rate
-				modulation = sta_data['mcs'].decoded.modulation
-				coding = sta_data['mcs'].decoded.coding_rate
+			rate, channel_flags = self.make_channel_mcs(sta_data)
 
-				channel_flags = f"{'+'.join(sta_data['channel'].flags)}\nCoding: {coding}"
-				rate = f"{mcs_rate} MB/s\n{modulation}"
-			else:
-				rate = f"{sta_data['rate']} MB/s"
-				channel_flags = '+'.join(sta_data['channel'].flags)
-
-			if row == -1:
-				row = []
-				mac_item = QStandardItem(QIcon('resources/icons/signal.png'), sta_addr_mixed)
-				mac_item.setData(sta_addr, Qt.UserRole +2)
-
-				row.append(mac_item)
-				row.append(QStandardItem(str(sta_data['rssi'])))
-				row.append(QStandardItem(str(sta_data['frames'])))
-				row.append(QStandardItem(rate))
-				row.append(QStandardItem(channel_flags))
-				row.append(QStandardItem('')) # Probes - заполняется позже
-				
-				self.sta_table_model.appendRow(row)
-				self.sta_table.setRowHeight(self.sta_table_model.rowCount() -1, 40)
-			else:
+			if row != -1:
 				self.sta_table_model.item(row, 1).setText(str(sta_data['rssi']))
 				self.sta_table_model.item(row, 2).setText(str(sta_data['frames']))
 				self.sta_table_model.item(row, 3).setText(rate)
 				self.sta_table_model.item(row, 4).setText(channel_flags)
+
+	def add_sta(self, sta_addr, sta_data):
+		sta_mac = sta_data['addrs']['client_addr'].lower()
+		if sta_mac:
+			sta_addr_mixed = self.core.VendorOUI.get_oui_name_mixed(sta_addr)
+
+			rate, channel_flags = self.make_channel_mcs(sta_data)
+
+			row = []
+			mac_item = QStandardItem(QIcon('resources/icons/signal.png'), sta_addr_mixed)
+			mac_item.setData(sta_addr, Qt.UserRole +2)
+
+			row.append(mac_item)
+			row.append(QStandardItem(str(sta_data['rssi'])))
+			row.append(QStandardItem(str(sta_data['frames'])))
+			row.append(QStandardItem(rate))
+			row.append(QStandardItem(channel_flags))
+			row.append(QStandardItem('')) # Probes - заполняется позже
+				
+			self.sta_table_model.appendRow(row)
+			self.sta_table.setRowHeight(self.sta_table_model.rowCount() -1, 40)
 
 class ScannerWindow(QMainWindow, Controls):
 	def __init__(self, core=None):
@@ -423,12 +431,19 @@ class ScannerWindow(QMainWindow, Controls):
 				first_item = self.access_points_table_model.item(row, 0)
 				ssid = first_item.data(Qt.UserRole +1)
 				stations_table.set_ssid(ssid)
-				stations_table.add_sta(sta_data)
+				stations_table.add_sta(sta_addr, sta_data)
 
 				self.access_points_table.setIndexWidget(subitem_index, stations_table)
 				self.access_points_table.setRowHeight(row +1, 103)
 
-				self.signals.request_saved_ap_sta.emit(ap_addr, sta_addr)
+			else:
+				subitem_index = self.access_points_table_model.index(row + 1, 0)
+				stations_table = self.access_points_table.indexWidget(subitem_index)
+				stations_table.add_sta(sta_addr, sta_data)
+					
+				num_rows = stations_table.sta_table_model.rowCount()
+				new_height = max(75, ((num_rows * 40) + 64))
+				self.access_points_table.setRowHeight(row +1, new_height)	
 	
 	def update_sta(self, ap_addr, sta_addr, sta_data):
 		row = self.find_row_by_userrole(
@@ -441,11 +456,7 @@ class ScannerWindow(QMainWindow, Controls):
 			if self.has_nested_exists(row +1):
 				subitem_index = self.access_points_table_model.index(row + 1, 0)
 				stations_table = self.access_points_table.indexWidget(subitem_index)
-				stations_table.add_sta(sta_data)
-					
-				num_rows = stations_table.sta_table_model.rowCount()
-				new_height = max(75, ((num_rows * 40) + 64))
-				self.access_points_table.setRowHeight(row +1, new_height)		
+				stations_table.update_sta(sta_addr, sta_data)	
 
 	def closeEvent(self, a0):
 		if self.signals:
