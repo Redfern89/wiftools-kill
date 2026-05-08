@@ -145,6 +145,9 @@ class Orchestrator:
 		self.target_controller.setCallback('on_eapol_done',  self.signals.target_eapol_done_signal.emit)
 
 		self.target_controller.setCallback('on_eapol_data_done', self.db_controller.insert_4way_handshake)
+		self.target_controller.setCallback('on_sta_found_addr', self.db_controller.get_ap_sta_db_exists)
+		
+		self.db_controller.setCallback('on_saved_ap_sta_found', self.signals.trget_set_sta_saved_signal.emit)
 
 		self.pkt_sender.setCallback('on_send_deauth', self.sniffer.send)
 		self.pkt_sender.setCallback('on_send_deauth_done', self.signals.target_on_deauth_done_signal.emit)
@@ -172,6 +175,8 @@ class Orchestrator:
 		except: pass
 		try: self.signals.target_on_deauth_done_signal.disconnect()
 		except: pass
+		try: self.signals.trget_set_sta_saved_signal.disconnect()
+		except: pass
 
 		self.signals.update_target_ap_signal.connect(self.ui.target_window.update_target_ap)
 		self.signals.set_trget_first_data_signal.connect(self.ui.target_window.set_first_data)
@@ -183,6 +188,7 @@ class Orchestrator:
 		self.signals.target_eapol_done_signal.connect(self.ui.target_window.eapol_done)
 		self.signals.target_on_deauth_signal.connect(self.ui.target_window.on_deauth)
 		self.signals.target_on_deauth_done_signal.connect(self.ui.target_window.deauth_done)
+		self.signals.trget_set_sta_saved_signal.connect(self.ui.target_window.on_saved_sta_found)
 
 		self.signals.start_target_signal.connect(self.sniffer.start_capture)
 		self.signals.stop_target_signal.connect(self.sniffer.stop)

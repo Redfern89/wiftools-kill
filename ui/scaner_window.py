@@ -394,7 +394,6 @@ class ScannerWindow(QMainWindow, Controls):
 			value=ap_addr,
 			role_index=2
 		)
-		print(f'[UI] Saved STA addr={sta_addr}, AP={ap_addr}, date={date}, row={row}')
 		if row != -1:
 			if self.has_nested_exists(row +1):
 				subitem_index = self.access_points_table_model.index(row + 1, 0)

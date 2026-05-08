@@ -143,6 +143,8 @@ class TargetPacketController(Callback):
 		self.on_eapol_data_done = None
 		self.on_eapol_error = None
 
+		self.on_sta_found_addr = None
+
 		self.stations = {}
 
 		self.beacons = 0
@@ -241,6 +243,10 @@ class TargetPacketController(Callback):
 						
 						if self.on_sta_found:
 							self.on_sta_found(sta)
+
+						if self.on_sta_found_addr:
+							self.on_sta_found_addr(ap_addr, sta_addr)
+
 					else:
 						self.stations[sta_addr]['counters']['frames'] += 1
 						self.stations[sta_addr]['channel'] = channel

@@ -37,6 +37,8 @@ class UISignals(QObject):
 	target_send_deauth_signal    = pyqtSignal(str, str, int, int, int, int) # AP Addr, STA Addr, reason, retries, attempts, timeout
 	target_on_deauth_signal      = pyqtSignal(str, str, int) # AP Addr, STA Addr, Reason code
 	target_on_deauth_done_signal = pyqtSignal()
+	target_request_saved_sta     = pyqtSignal(str, str) # AP Addr, STA Addr
+	trget_set_sta_saved_signal   = pyqtSignal(str, str, str) # AP Addr, STA Addr, Date
 
 	handshakes_db_show_signal    = pyqtSignal()
 

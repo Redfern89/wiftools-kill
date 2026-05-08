@@ -496,6 +496,24 @@ class DeauthDialog(QDialog, Controls):
 		self.deauth_button.setEnabled(True)
 		self.deauth_direct_button.setEnabled(True)
 
+	def on_saved_sta_found(self, ap_addr, sta_addr, date):
+		self.update_item_role(
+			baseModel=self.stations_table_model,
+			col=0,
+			search_role_index=0,
+			search_role_val=sta_addr,
+			set_role_index=1,
+			set_role_val='SAVED'
+		)
+		self.update_item_role(
+			baseModel=self.stations_table_model,
+			col=0,
+			search_role_index=0,
+			search_role_val=sta_addr,
+			set_role_index=2,
+			set_role_val=date
+		)
+
 	def closeEvent(self, a0):
 		if self.core:
 			self.core.UISignals.close_target_signal.emit()

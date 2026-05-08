@@ -242,16 +242,10 @@ class TargetSTADelegate(QStyledItemDelegate):
 			option.font = QFont("Courier New", 10)
 
 	def paint(self, painter, option, index):
-		model = index.model()
-		mac = index.data(Qt.UserRole)
-		eapol_flag = index.data(Qt.UserRole +1)
+		flag = index.data(Qt.UserRole +1)
 		saved_date = index.data(Qt.UserRole +2)
-		if saved_date:
-			saved_date = datetime.fromtimestamp(saved_date).strftime('%d.%m.%Y %H:%M')
-		else:
-			saved_date = '(SAVED)'
 
-		if index.column() == 0 and eapol_flag in ['EAPOL', 'SAVED']:
+		if index.column() == 0 and flag in ['EAPOL', 'SAVED']:
 
 			states = {
 				'EAPOL': {
@@ -286,7 +280,7 @@ class TargetSTADelegate(QStyledItemDelegate):
 			font.setBold(True)
 			font.setUnderline(True)
 			painter.setFont(font)
-			painter.setPen(QColor(states[eapol_flag]['color']))
+			painter.setPen(QColor(states[flag]['color']))
 			
 			painter.drawText(text_x, text_y-1, option.rect.width() - text_x, line_height, Qt.AlignLeft | Qt.AlignTop, text)
 			font.setUnderline(False)
@@ -294,9 +288,9 @@ class TargetSTADelegate(QStyledItemDelegate):
 			font.setItalic(True)
 			painter.setFont(font)
 			painter.setPen(QColor(Qt.gray))
-			painter.drawText(text_x +17, text_y + line_height + 3, option.rect.width() - text_x, line_height, Qt.AlignLeft | Qt.AlignTop, states[eapol_flag]['text'])
+			painter.drawText(text_x +17, text_y + line_height + 3, option.rect.width() - text_x, line_height, Qt.AlignLeft | Qt.AlignTop, states[flag]['text'])
 
-			eapol_icon = QIcon(states[eapol_flag]['icon'])
+			eapol_icon = QIcon(states[flag]['icon'])
 			eapol_icon_rect = QRect(option.rect.x() + icon_size +2, option.rect.y() + line_height +5, 16, 16)
 			eapol_icon.paint(painter, eapol_icon_rect, Qt.AlignVCenter)
 
