@@ -212,7 +212,8 @@ class Orchestrator:
 
 	def show_handshakes_db_window(self):
 		self.ui.show_handshakes_db_window()
-		self.db_controller.setCallback('on_handshakes_data_ready', self.ui.handshakes_db_window.update_data)
+		self.db_controller.setCallback('on_handshakes_data_ready', self.signals.handshakes_db_resp_signal.emit)
+		self.signals.handshakes_db_resp_signal.connect(self.ui.handshakes_db_window.update_data)
 		self.db_controller.get_saved_handshakes()
 
 	def _update_phys(self):

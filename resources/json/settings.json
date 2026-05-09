@@ -11,7 +11,7 @@
     "hopper_timeout": 0.4,
     "deauth_packets": 127,
     "deauth_attempts": 1,
-    "deauth_reason": 7,
+    "deauth_reason": 3,
     "deauth_timeout": 1,
     "deauth_from_sta": true,
     "create_hc2200": true,

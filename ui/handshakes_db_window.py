@@ -6,6 +6,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QFont, QPainte
 from PyQt5.QtCore import Qt, QSize
 # Предполагаем, что ui.controls лежит рядом
 from ui.controls import Controls
+from ui.deligates import ProgressBarDelegate
 
 class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для примера, верни если нужно
 	def __init__(self, core=None, parent=None):
@@ -56,6 +57,8 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 
 		self.tree_view.setColumnWidth(0, 200)
 		self.tree_view.setColumnWidth(1, 330)
+
+		self.tree_view.setItemDelegateForColumn(1, ProgressBarDelegate(self.tree_view))
 		
 		layout.addWidget(self.tree_view)
 
@@ -80,18 +83,20 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 					eapol_messages = sta_data['messages']
 					
 					for message_type, message_data in eapol_messages.items():
+						icon = 'right-arrow' if 'from_ds' in message_data['flags'] else 'left-arrow'
 						message_item = QStandardItem(
-							QIcon("resources/icons/message.png"),
-							message_type
+							QIcon(f"resources/icons/{icon}.png"),
+							f'{message_type}\nMESSAGE'
 						)
-						direction = '>' if 'from_ds' in message_data['flags'] else '<'
+						#direction = '>' if 'from_ds' in message_data['flags'] else '<'
 						bssid_oui = self.core.VendorOUI.get_oui_name_mixed(bssid)
 						sta_oui = self.core.VendorOUI.get_oui_name_mixed(sta_addr)
 
-						message_info = f"{bssid_oui} {direction} {sta_oui}\nRSSI: {message_data['rssi']} dBm"
-						message_info_item = QStandardItem(message_info)
+						#message_info = f"{bssid_oui} {direction} {sta_oui}\nRSSI: {message_data['rssi']} dBm"
+						message_info_item = QStandardItem(str(message_data['rssi']))
 						message_date_item = QStandardItem(message_data['date'])
 						
 						sta_item.appendRow([message_item, message_info_item, message_date_item])
 					
 				self.model.appendRow(ap_row)
+				self.tree_view.expandAll()
