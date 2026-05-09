@@ -211,14 +211,9 @@ class Orchestrator:
 		self.signals.request_phys_signal.emit()
 
 	def show_handshakes_db_window(self):
-		
-		self.signals.handshakes_db_req_signal.connect(self._update_eapol_db_ui)
 		self.ui.show_handshakes_db_window()
-		self.signals.handshakes_db_req_signal.emit()
-
-	def _update_eapol_db_ui(self):
-		data = self.db_controller.get_saved_handshakes()
-		self.ui.handshakes_db_window.update_data(data)
+		self.db_controller.setCallback('on_handshakes_data_ready', self.ui.handshakes_db_window.update_data)
+		self.db_controller.get_saved_handshakes()
 
 	def _update_phys(self):
 		data = self.wifi_controller.handle_phys_details()

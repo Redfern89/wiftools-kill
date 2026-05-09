@@ -390,7 +390,7 @@ class DBController(Callback):
 		self.db = db
 		self.on_saved_ap_found = None
 		self.on_saved_ap_sta_found = None
-		self.on_saved_data_recv = None
+		self.on_handshakes_data_ready = None
 		self.task_queue = queue.Queue()
 		
 		# Запускаем воркера
@@ -442,6 +442,7 @@ class DBController(Callback):
 				if self.on_saved_ap_sta_found:
 					self.on_saved_ap_sta_found(bssid, sta, sta_data['date'])
 
+	@async_task
 	def get_saved_handshakes(self):
 		aps = self.db.get_rows('access_points')
 		result = {}
@@ -490,7 +491,8 @@ class DBController(Callback):
 							'date': sta['date']
 						}
 
-		return result
+		if self.on_handshakes_data_ready:
+			self.on_handshakes_data_ready(result)
 
 
 class PacketSender(Callback):

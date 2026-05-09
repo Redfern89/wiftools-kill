@@ -60,37 +60,38 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 		layout.addWidget(self.tree_view)
 
 	def update_data(self, data):
-		for bssid, ap in data.items():
-			ap_item = QStandardItem(
-				QIcon("resources/icons/wireless-router.png"),
-				ap['ssid']
-			)
-			ap_mac  = QStandardItem(self.core.VendorOUI.get_oui_name_mixed(bssid))
-			ap_date = QStandardItem(ap['date'])
-			ap_row = [ap_item, ap_mac, ap_date]
-
-			ap_sta = ap['stations']
-			for sta_addr, sta_data in ap_sta.items():
-				sta_item = QStandardItem(
-					QIcon("resources/icons/key.png"),
-					self.core.VendorOUI.get_oui_name_mixed(sta_addr)
+		if data:
+			for bssid, ap in data.items():
+				ap_item = QStandardItem(
+					QIcon("resources/icons/wireless-router.png"),
+					ap['ssid']
 				)
-				ap_item.appendRow([sta_item, QStandardItem("")])
-				eapol_messages = sta_data['messages']
-				
-				for message_type, message_data in eapol_messages.items():
-					message_item = QStandardItem(
-						QIcon("resources/icons/message.png"),
-						message_type
-					)
-					direction = '>' if 'from_ds' in message_data['flags'] else '<'
-					bssid_oui = self.core.VendorOUI.get_oui_name_mixed(bssid)
-					sta_oui = self.core.VendorOUI.get_oui_name_mixed(sta_addr)
+				ap_mac  = QStandardItem(self.core.VendorOUI.get_oui_name_mixed(bssid))
+				ap_date = QStandardItem(ap['date'])
+				ap_row = [ap_item, ap_mac, ap_date]
 
-					message_info = f"{bssid_oui} {direction} {sta_oui}\nRSSI: {message_data['rssi']} dBm"
-					message_info_item = QStandardItem(message_info)
-					message_date_item = QStandardItem(message_data['date'])
+				ap_sta = ap['stations']
+				for sta_addr, sta_data in ap_sta.items():
+					sta_item = QStandardItem(
+						QIcon("resources/icons/key.png"),
+						self.core.VendorOUI.get_oui_name_mixed(sta_addr)
+					)
+					ap_item.appendRow([sta_item, QStandardItem("")])
+					eapol_messages = sta_data['messages']
 					
-					sta_item.appendRow([message_item, message_info_item, message_date_item])
-				
-			self.model.appendRow(ap_row)
+					for message_type, message_data in eapol_messages.items():
+						message_item = QStandardItem(
+							QIcon("resources/icons/message.png"),
+							message_type
+						)
+						direction = '>' if 'from_ds' in message_data['flags'] else '<'
+						bssid_oui = self.core.VendorOUI.get_oui_name_mixed(bssid)
+						sta_oui = self.core.VendorOUI.get_oui_name_mixed(sta_addr)
+
+						message_info = f"{bssid_oui} {direction} {sta_oui}\nRSSI: {message_data['rssi']} dBm"
+						message_info_item = QStandardItem(message_info)
+						message_date_item = QStandardItem(message_data['date'])
+						
+						sta_item.appendRow([message_item, message_info_item, message_date_item])
+					
+				self.model.appendRow(ap_row)
