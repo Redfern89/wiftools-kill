@@ -223,7 +223,7 @@ class PCAPWritter:
 	def __init__(self, filename):
 		self.pcap_file = open(filename, 'wb')
 		header = struct.pack('<4s4s4s4s4s4s',
-			b'\xD4\xC3\xB2\xA1', # Magic number (pcap format, little endian)
+			b'\xD4\xC3\xB2\xA1', # A fcuked magic number (pcap format, little endian)
 			b'\x02\x00\x04\x00', # Versions
 			b'\x00\x00\x00\x00', # TZ
 			b'\x00\x00\x00\x00', # Sigfigs

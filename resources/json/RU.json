@@ -79,5 +79,9 @@
     "sta_table_labels": ["Адрес", "Уровень сигнала (RSSI)", "Фреймы", "Битрейт/MCS", "Модуляция", "Probes"],
     "target_sta_table_labels": ["Адрес", "Уровень сигнала (RSSI)", "Фреймы", "ACKs/Blocks", "Битрейт/MCS", "Модуляция", "Флаги", "Probes"],
     "probes_table_labels": ["MAC-адрес", "Имя сети", "Производитель"],
-    "log_table_labels": ["Событие", "Время"]   
+    "log_table_labels": ["Событие", "Время"],
+
+    "save_to_pcap_button": "Сохранить в .pcap",
+    "delete_handshake_button": "Удалить хэндшейк",
+    "details_button": "Детальные данные"
 }

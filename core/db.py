@@ -73,6 +73,33 @@ class Database:
 			return dict(zip(columns, row))
 		
 		return None
+	
+	def get_rows(self, table: str, search_data: dict = None, group_by: str = None, limit: int = None) -> list:
+		query = f'SELECT * FROM {table}'
+		values = ()
+
+		# Формируем WHERE, если переданы данные для поиска
+		if search_data:
+			conditions = " AND ".join([f"{key} = ?" for key in search_data.keys()])
+			query += f' WHERE {conditions}'
+			values = tuple(search_data.values())
+
+		# Добавляем GROUP BY, если указан
+		if group_by:
+			query += f' GROUP BY {group_by}'
+
+		# Добавляем LIMIT, если указан
+		if limit:
+			query += f' LIMIT {limit}'
+
+		cursor = self.execute_read(query, values)
+		rows = cursor.fetchall()
+
+		if rows:
+			columns = [column[0] for column in cursor.description]
+			return [dict(zip(columns, row)) for row in rows]
+		
+		return []
 
 	def get_ap_id(self, bssid):
 		cursor = self.execute_read('SELECT id FROM access_points WHERE bssid = ? LIMIT 1;', (bssid,))

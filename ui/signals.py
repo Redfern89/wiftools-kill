@@ -41,6 +41,8 @@ class UISignals(QObject):
 	trget_set_sta_saved_signal   = pyqtSignal(str, str, str) # AP Addr, STA Addr, Date
 
 	handshakes_db_show_signal    = pyqtSignal()
+	handshakes_db_req_signal     = pyqtSignal()
+	handshakes_db_resp_signal    = pyqtSignal(dict) # Saved data
 
 	def __init__(self):
 		super().__init__()

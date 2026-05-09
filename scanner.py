@@ -42,6 +42,7 @@ class Orchestrator:
 		self.signals.show_target_signal.connect(self.switch_to_target)
 		self.signals.close_target_signal.connect(self.switch_to_scanner)
 		self.signals.show_wifi_manager_signal.connect(self.show_wifi_manager)
+		self.signals.handshakes_db_show_signal.connect(self.show_handshakes_db_window)
 
 		# Сеттеры данных
 		self.signals.select_interface_signal.connect(self._handle_iface_select)
@@ -208,6 +209,16 @@ class Orchestrator:
 		
 		self.ui.show_wifi_manager()
 		self.signals.request_phys_signal.emit()
+
+	def show_handshakes_db_window(self):
+		
+		self.signals.handshakes_db_req_signal.connect(self._update_eapol_db_ui)
+		self.ui.show_handshakes_db_window()
+		self.signals.handshakes_db_req_signal.emit()
+
+	def _update_eapol_db_ui(self):
+		data = self.db_controller.get_saved_handshakes()
+		self.ui.handshakes_db_window.update_data(data)
 
 	def _update_phys(self):
 		data = self.wifi_controller.handle_phys_details()

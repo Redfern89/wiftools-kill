@@ -390,6 +390,7 @@ class DBController(Callback):
 		self.db = db
 		self.on_saved_ap_found = None
 		self.on_saved_ap_sta_found = None
+		self.on_saved_data_recv = None
 		self.task_queue = queue.Queue()
 		
 		# Запускаем воркера
@@ -440,6 +441,57 @@ class DBController(Callback):
 			if sta_data:
 				if self.on_saved_ap_sta_found:
 					self.on_saved_ap_sta_found(bssid, sta, sta_data['date'])
+
+	def get_saved_handshakes(self):
+		aps = self.db.get_rows('access_points')
+		result = {}
+
+		for ap in aps:
+			beacon = ap['beacon']
+			if beacon:
+				RadioTap_PKT = RadioTap(beacon)
+				Dot11 = Dot11_Layer(radiotap=RadioTap_PKT, pkt=beacon)
+				dBm_AntSignal = RadioTap_PKT.get('dBm_AntSignal')
+				channel = RadioTap_PKT.get('Channel')
+
+				if Dot11.fc.type_subtype == 0x80:
+					elt = Dot11.Dot11Elt()
+					ssid = IEEE80211_Utils.get_ap_ssid(elt)
+					bssid = Dot11.addrs.addr3
+					
+					result[bssid] = {
+						'ssid': ssid,
+						'bssid': bssid,
+						'rssi': dBm_AntSignal,
+						'date': ap['date'],
+						'channel': channel.channel,
+						'stations': {}
+					}
+
+					stations = self.db.get_rows('stations', {'ap_id': ap['id']})
+
+					for sta in stations:
+						sta_id = sta['sta']
+						eapol = sta['eapol']
+						eapol_rt = RadioTap(eapol)
+						eapol_dot11 = Dot11_Layer(radiotap=eapol_rt, pkt=eapol)
+						eapol_dBm_AntSignal = eapol_rt.get('dBm_AntSignal')
+
+						if sta_id not in result[bssid]['stations']:
+							result[bssid]['stations'][sta_id] = {
+								'addr': sta_id,
+								'messages': {}
+							}
+						
+						result[bssid]['stations'][sta_id]['messages'][sta['message_type']] = {
+							'message': sta['message_type'],
+							'rssi': eapol_dBm_AntSignal,
+							'flags': eapol_dot11.fc.flags,
+							'date': sta['date']
+						}
+
+		return result
+
 
 class PacketSender(Callback):
 	def __init__(self):

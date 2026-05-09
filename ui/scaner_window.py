@@ -197,7 +197,8 @@ class ScannerWindow(QMainWindow, Controls):
 
 		self.handshakes_button = self.create_button(
 			'handshakes_button',
-			'key'
+			'key',
+			self.core.UISignals.handshakes_db_show_signal.emit
 		)
 
 		self.topLayout.addWidget(self.select_adapter_button)

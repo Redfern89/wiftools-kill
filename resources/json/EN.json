@@ -79,5 +79,9 @@
     "sta_table_labels": ["Adress", "RSSI", "Frames", "Rate/MCS", "Modulaction/Coding", "Probes"],
     "target_sta_table_labels": ["Adress", "RSSI", "Frames", "ACKs/Blocks", "Rate/MOD", "Modulation", "Flags", "Probes"],
     "probes_table_labels": ["MAC", "SSID", "Vendor"],
-    "log_table_labels": ["Event", "Time"] 
+    "log_table_labels": ["Event", "Time"],
+
+    "save_to_pcap_button": "Save to .pcap",
+    "delete_handshake_button": "Delete handshake",
+    "details_button": "Details"
 }
