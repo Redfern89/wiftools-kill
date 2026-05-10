@@ -1,5 +1,7 @@
+import os
 import time
 import threading
+import subprocess
 import queue
 from core.ieee80211 import RadioTap, Dot11_Layer, Dot11PacketBuilder
 from core.misc import IEEE80211_Utils
@@ -10,14 +12,63 @@ from functools import wraps
 
 class PcapController:
 	def __init__(self):
+		self.on_save = None
+		self.on_save_error = None
 		pass
 
-	def save_pcap(self, filename, filter, data):		
+	def convert_pcap_to_hc22000(self, input, output):
+		try:
+			command = [
+				'hcxpcapngtool',
+				'-o', output,
+				input
+			]
+			result = subprocess.run(
+				command,
+				stdout=subprocess.PIPE,
+				stderr=subprocess.PIPE
+			)
+
+			if result.returncode == 0:
+				os.remove(input)
+				if self.on_save:
+					self.on_save(output)
+		
+		except FileNotFoundError:
+			if self.on_save_error:
+				self.on_save_error()
+
+
+	def save_pcap(self, filename, filter, data):
+		clean_filename = os.path.splitext(filename)[0]
 		if "pcap" in filter:
+			pcap_path = f'{clean_filename}.pcap'
+			pcap_writter = PCAPWritter(pcap_path)
+			pcap_writter.write(data, True)
+		
+		elif "hc22000" in filter:
+			base_name = os.path.basename(clean_filename)
+			target_dir = os.path.dirname(clean_filename)
+			tmp_pcap = f'/tmp/{base_name}.pcap'
+			pcap_writter = PCAPWritter(tmp_pcap)
+			pcap_writter.write(data, True)
+			hc22000_path = f'{clean_filename}.hc22000'
+			self.convert_pcap_to_hc22000(tmp_pcap, hc22000_path)
+		
+		'''if "pcap" in filter:
 			pcap_writter = PCAPWritter(f'{filename}.pcap')
 			pcap_writter.write(data, True)
+
 		elif "hc22000" in filter:
-			print("Hashcat file!")
+			if os.path.exists('/tmp'):
+				base = os.path.basename(filename)
+				path = os.path.pardir(filename)
+				file = f'/tmp/{base}.pcap'
+				pcap_writter = PCAPWritter(f'{file}.pcap')
+				pcap_writter.write(data, True)
+				hc22000_path = os.path.join(path, f'{base}.hc22000')
+				self.convert_pcap_to_hc22000(file, hc22000_path)'''
+
 
 class PacketController(Callback):
 	def __init__(self):
