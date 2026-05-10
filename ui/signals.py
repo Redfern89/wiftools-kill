@@ -44,7 +44,7 @@ class ScannerSignals(QObject):
 	
 class HandshakesDBSignals(QObject):
 	show_signal                  = pyqtSignal()
-	req_signal                   = pyqtSignal()
+	db_req_signal                = pyqtSignal() # Not used
 	db_resp_signal               = pyqtSignal(dict) # Saved data	
 
 class UISignals(QObject):
