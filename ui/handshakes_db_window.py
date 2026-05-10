@@ -48,37 +48,37 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 		layout.addLayout(button_layout)
 
 		# --- Дерево (AP / STA) ---
-		self.tree_view = QTreeView()
-		self.model = QStandardItemModel()
-		self.model.setHorizontalHeaderLabels(['Точка доступа / Клиент', 'MAC-адрес', 'Статус'])
+		self.handshakes_db_tree = QTreeView()
+		self.handshakes_db_tree_model = QStandardItemModel()
+		self.handshakes_db_tree_model.setHorizontalHeaderLabels(['Точка доступа / Клиент', 'MAC-адрес', 'Статус'])
 		
-		self.tree_view.setModel(self.model)
-		self.tree_view.header().setStretchLastSection(True)
-		self.tree_view.setIconSize(QSize(32, 32))
-		self.tree_view.setEditTriggers(QTreeView.NoEditTriggers)
-		self.tree_view.selectionModel().selectionChanged.connect(self.on_selection_changed)
+		self.handshakes_db_tree.setModel(self.handshakes_db_tree_model)
+		self.handshakes_db_tree.header().setStretchLastSection(True)
+		self.handshakes_db_tree.setIconSize(QSize(32, 32))
+		self.handshakes_db_tree.setEditTriggers(QTreeView.NoEditTriggers)
+		self.handshakes_db_tree.selectionModel().selectionChanged.connect(self.on_selection_changed)
 
-		self.tree_view.setColumnWidth(0, 200)
-		self.tree_view.setColumnWidth(1, 330)
+		self.handshakes_db_tree.setColumnWidth(0, 200)
+		self.handshakes_db_tree.setColumnWidth(1, 330)
 
-		self.tree_view.setItemDelegateForColumn(0, MessageItemDelegate(self.tree_view))
-		self.tree_view.setItemDelegateForColumn(1, ProgressBarDelegate(self.tree_view))
+		self.handshakes_db_tree.setItemDelegateForColumn(0, MessageItemDelegate(self.handshakes_db_tree))
+		self.handshakes_db_tree.setItemDelegateForColumn(1, ProgressBarDelegate(self.handshakes_db_tree))
 		
-		layout.addWidget(self.tree_view)
+		layout.addWidget(self.handshakes_db_tree)
 
 	def save_pcap(self):
 		role = self.get_selected_val(
-			table=self.tree_view,
+			table=self.handshakes_db_tree,
 			col=0,
 			role=Qt.UserRole
 		)
 		bssid = self.get_selected_val(
-			table=self.tree_view,
+			table=self.handshakes_db_tree,
 			col=0,
 			role=Qt.UserRole +1
 		)
 		sta_addr = self.get_selected_val(
-			table=self.tree_view,
+			table=self.handshakes_db_tree,
 			col=0,
 			role=Qt.UserRole +2
 		)
@@ -118,6 +118,9 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 			self.btn_save.setEnabled(False)
 
 	def update_data(self, data):
+		# Чистка блять!!!
+		self.handshakes_db_tree_model.setRowCount(0)
+
 		if data:
 			for bssid, ap in data.items():
 				ap_item = QStandardItem(
@@ -165,5 +168,5 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 						probe_date = QStandardItem(probe['date'])
 						sta_item.appendRow([probe_item, probe_ssid, probe_date])
 					
-				self.model.appendRow(ap_row)
+				self.handshakes_db_tree_model.appendRow(ap_row)
 				#self.tree_view.expandAll()

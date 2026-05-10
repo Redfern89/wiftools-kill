@@ -511,7 +511,6 @@ class DBController(Callback):
 		
 			if self.on_handshake_data_ready:
 				self.on_handshake_data_ready(result)
-			
 
 	@async_task
 	def get_saved_handshakes(self):

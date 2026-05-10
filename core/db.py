@@ -88,7 +88,6 @@ class Database:
 		cursor = self.execute_read(query, values)
 		return cursor.fetchone() is not None
 
-
 	def get_row(self, table: str, search_data: dict) -> dict:
 		conditions = " AND ".join([f"{key} = ?" for key in search_data.keys()])
 		values = tuple(search_data.values())
