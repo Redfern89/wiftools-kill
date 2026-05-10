@@ -5,7 +5,19 @@ from core.ieee80211 import RadioTap, Dot11_Layer, Dot11PacketBuilder
 from core.misc import IEEE80211_Utils
 from core.ieee80211_hardware import IEEE80211_Hardware
 from core.callback import Callback
+from core.misc import PCAPWritter
 from functools import wraps
+
+class PcapController:
+	def __init__(self):
+		pass
+
+	def save_pcap(self, filename, filter, data):		
+		if "pcap" in filter:
+			pcap_writter = PCAPWritter(f'{filename}.pcap')
+			pcap_writter.write(data, True)
+		elif "hc22000" in filter:
+			print("Hashcat file!")
 
 class PacketController(Callback):
 	def __init__(self):
@@ -391,6 +403,7 @@ class DBController(Callback):
 		self.on_saved_ap_found = None
 		self.on_saved_ap_sta_found = None
 		self.on_handshakes_data_ready = None
+		self.on_handshake_data_ready = None
 		self.task_queue = queue.Queue()
 		
 		# Запускаем воркера
@@ -441,6 +454,25 @@ class DBController(Callback):
 			if sta_data:
 				if self.on_saved_ap_sta_found:
 					self.on_saved_ap_sta_found(bssid, sta, sta_data['date'])
+	
+	@async_task
+	def get_handshake_bin(self, bssid: str, sta_addr: str):
+		result = []
+		ap = self.db.get_row('access_points', {
+			'bssid': bssid
+		})
+		if ap:
+			sta_data = self.db.get_rows('stations', {
+				'ap_id': ap['id'],
+				'sta': sta_addr
+			})
+			result.append(ap['beacon'])
+			for sta in sta_data:
+				result.append(sta['eapol'])
+		
+			if self.on_handshake_data_ready:
+				self.on_handshake_data_ready(result)
+			
 
 	@async_task
 	def get_saved_handshakes(self):

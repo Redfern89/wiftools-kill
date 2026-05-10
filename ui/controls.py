@@ -91,7 +91,7 @@ class Controls:
 		item = self.core.Translations.gettext(item)
 		qLabel.setText(f"<b>{item}: </b>{val}")
 
-	def get_table_selected_row(self, baseTable: QTableView):
+	def get_table_selected_row(self, baseTable: any):
 		indexes = baseTable.selectionModel().selectedIndexes()
 		return indexes[0].row() if indexes else None
 
@@ -113,5 +113,14 @@ class Controls:
 			item = baseModel.item(row, col)
 			item.setData(set_role_val, Qt.UserRole + set_role_index)
 	
-	def get_item_value(self, baseModel: QStandardItemModel, row: int, column: int, role=Qt.DisplayRole):
-		return baseModel.data(baseModel.index(row, column), role)
+	def get_item_value(self, baseModel: QStandardItemModel, row: int, col: int, role=Qt.DisplayRole):
+		return baseModel.data(baseModel.index(row, col), role)
+
+	def get_selected_val(self, table: any, col: int, role=Qt.DisplayRole):
+		index = table.currentIndex()
+		if not index.isValid():
+			return None
+		
+		if index.column() == col:
+			index = index.sibling(index.row(), col)
+			return index.data(role)

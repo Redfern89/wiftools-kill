@@ -10,7 +10,8 @@ from core.controllers import (
     WifiManagerController,
     TargetPacketController,
     PacketSender,
-    DBController
+    DBController,
+	PcapController
 )
 from core.hopper import ChannelHopper
 
@@ -25,11 +26,21 @@ class Orchestrator:
 		self.pkt_sender = PacketSender()
 		self.pkt_controller = PacketController()
 		self.db_controller = DBController(db=app_core.Database)
-		
+		self.pcap_controller = PcapController()
+
+		self.signals.handshakes.db_get_data.connect(self.save_handshake)
+
 		self.target_controller = None
 		self.wifi_controller = None 
 		self._setup_initial_callbacks()
 		self._setup_logic_signals() # Только логика, без UI
+
+	def save_handshake(self, filepath, filter, ap, sta):
+		def handshake_ready(data):
+			self.pcap_controller.save_pcap(filepath, filter, data)
+
+		self.db_controller.get_handshake_bin(bssid=ap, sta_addr=sta)
+		self.db_controller.setCallback('on_handshake_data_ready', handshake_ready)
 
 	def _setup_logic_signals(self):
 		"""Коннектим только то, что не касается окон напрямую"""

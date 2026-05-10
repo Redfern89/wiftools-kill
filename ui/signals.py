@@ -46,6 +46,7 @@ class HandshakesDBSignals(QObject):
 	show_signal                  = pyqtSignal()
 	db_req_signal                = pyqtSignal() # Not used
 	db_resp_signal               = pyqtSignal(dict) # Saved data	
+	db_get_data                  = pyqtSignal(str, str, str, str) # File path, Filter, AP Addr, STA Addr
 
 class UISignals(QObject):
 	def __init__(self):

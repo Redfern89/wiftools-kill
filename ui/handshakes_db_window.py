@@ -1,9 +1,9 @@
 import sys
 from PyQt5.QtWidgets import (QApplication, QDialog, QVBoxLayout, 
-							 QHBoxLayout, QPushButton, QTreeView)
+							 QHBoxLayout, QPushButton, QTreeView, QFileDialog)
 from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QFont, QPainter
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QItemSelection
 # Предполагаем, что ui.controls лежит рядом
 from ui.controls import Controls
 from ui.deligates import ProgressBarDelegate
@@ -28,7 +28,9 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 		
 		self.btn_save = self.create_button(
 			text='save_to_pcap_button',
-			icon='diskette'
+			icon='diskette',
+			enabled=False,
+			callback=self.save_pcap
 		)
 		self.btn_delete = self.create_button(
 			text='delete_handshake_button',
@@ -54,6 +56,7 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 		self.tree_view.header().setStretchLastSection(True)
 		self.tree_view.setIconSize(QSize(24, 24))
 		self.tree_view.setEditTriggers(QTreeView.NoEditTriggers)
+		self.tree_view.selectionModel().selectionChanged.connect(self.on_selection_changed)
 
 		self.tree_view.setColumnWidth(0, 200)
 		self.tree_view.setColumnWidth(1, 330)
@@ -62,6 +65,57 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 		
 		layout.addWidget(self.tree_view)
 
+	def save_pcap(self):
+		role = self.get_selected_val(
+			table=self.tree_view,
+			col=0,
+			role=Qt.UserRole
+		)
+		bssid = self.get_selected_val(
+			table=self.tree_view,
+			col=0,
+			role=Qt.UserRole +1
+		)
+		sta_addr = self.get_selected_val(
+			table=self.tree_view,
+			col=0,
+			role=Qt.UserRole +2
+		)
+		if role == 'STA':
+			self.save_sta(bssid=bssid, sta_addr=sta_addr)
+
+	def save_sta(self, bssid, sta_addr):
+		oui_bssid = self.core.VendorOUI.get_oui_name_mixed(bssid)
+		oui_sta = self.core.VendorOUI.get_oui_name_mixed(sta_addr)
+		file_name = f'{oui_bssid}_{oui_sta}'
+		file_name = file_name.replace(':', '')
+		file_filter = "PCAP Files (*.pcap);;Hashcat hc22000 (*.hc22000);;All files (*)"
+
+		file_path, selected_filter = QFileDialog.getSaveFileName(
+			parent=self,
+			caption="Save handshake",
+			directory=file_name,
+			filter=file_filter
+		)
+
+		if file_path:
+			self.core.UISignals.handshakes.db_get_data.emit(file_path, selected_filter, bssid, sta_addr)
+
+	def on_selection_changed(self, selected: QItemSelection, deselected: QItemSelection):
+		indexes = selected.indexes()
+		if not indexes:
+			return
+		
+		index = indexes[0]
+		item_type = index.data(Qt.UserRole)
+
+		if item_type == 'STA':
+			bssid    = index.data(Qt.UserRole +1)
+			sta_addr = index.data(Qt.UserRole +2)
+			self.btn_save.setEnabled(True)
+		else:
+			self.btn_save.setEnabled(False)
+
 	def update_data(self, data):
 		if data:
 			for bssid, ap in data.items():
@@ -69,6 +123,7 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 					QIcon("resources/icons/wireless-router.png"),
 					ap['ssid']
 				)
+				ap_item.setData('AP', Qt.UserRole)
 				ap_mac  = QStandardItem(self.core.VendorOUI.get_oui_name_mixed(bssid))
 				ap_date = QStandardItem(ap['date'])
 				ap_row = [ap_item, ap_mac, ap_date]
@@ -79,6 +134,10 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 						QIcon("resources/icons/key.png"),
 						self.core.VendorOUI.get_oui_name_mixed(sta_addr)
 					)
+					sta_item.setData('STA', Qt.UserRole)
+					sta_item.setData(bssid, Qt.UserRole +1)
+					sta_item.setData(sta_addr, Qt.UserRole +2)
+
 					ap_item.appendRow([sta_item, QStandardItem("")])
 					eapol_messages = sta_data['messages']
 					
