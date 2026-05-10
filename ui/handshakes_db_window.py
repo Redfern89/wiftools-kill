@@ -154,6 +154,16 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 						message_date_item = QStandardItem(message_data['date'])
 						
 						sta_item.appendRow([message_item, message_info_item, message_date_item])
+
+					probes = sta_data['probes']
+					for probe in probes:
+						probe_item = QStandardItem(
+							QIcon("resources/icons/broadcast-media.png"),
+							'Probe request'
+						)
+						probe_ssid = QStandardItem(probe['ssid'])
+						probe_date = QStandardItem(probe['date'])
+						sta_item.appendRow([probe_item, probe_ssid, probe_date])
 					
 				self.model.appendRow(ap_row)
 				#self.tree_view.expandAll()

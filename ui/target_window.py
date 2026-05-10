@@ -433,7 +433,7 @@ class DeauthDialog(QDialog, Controls):
 			self.stations_table_model.item(row, 7).setText(probes)
 
 	def probe_request(self, probe_addr, ssid):
-		self.log('investigation', self.core.Translations.gettext(
+		self.log('broadcast-media', self.core.Translations.gettext(
 			'recv_probe_msg',
 			ssid=ssid,
 			probe_addr=self.core.VendorOUI.get_oui_name_mixed(probe_addr)

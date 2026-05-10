@@ -133,7 +133,11 @@ class Orchestrator:
 		self.hopper.stop()
 		#self.core.Database.close()
 
-	def switch_to_target(self, iface, bssid, channel):
+	def switch_to_target(self, iface, bssid, channel):		
+		def _on_probe(probe_addr, ssid):
+			self.signals.target.sta_probe_signal.emit(probe_addr, ssid)
+			self.db_controller.insert_probe(probe_addr, ssid)
+		
 		self.stop_all()
 		
 		# 1. Сначала СОЗДАЕМ окно
@@ -151,7 +155,7 @@ class Orchestrator:
 		self.target_controller.setCallback('on_first_beacon', self.signals.target.set_first_data_signal.emit)
 		self.target_controller.setCallback('on_sta_found', self.signals.target.sta_found_signal.emit)
 		self.target_controller.setCallback('on_sta_update', self.signals.target.sta_update_signal.emit)
-		self.target_controller.setCallback('on_sta_probe_req', self.signals.target.sta_probe_signal.emit)
+		self.target_controller.setCallback('on_sta_probe_req', _on_probe)
 		self.target_controller.setCallback('on_eapol_received', self.signals.target.eapol_recv_signal.emit)
 		self.target_controller.setCallback('on_eapol_error', self.signals.target.eapol_error_signal.emit)
 		self.target_controller.setCallback('on_eapol_done',  self.signals.target.eapol_done_signal.emit)
@@ -159,6 +163,8 @@ class Orchestrator:
 		self.target_controller.setCallback('on_eapol_data_done', self.db_controller.insert_4way_handshake)
 		self.target_controller.setCallback('on_sta_found_addr', self.db_controller.get_ap_sta_db_exists)
 		
+		#self.target_controller.setCallback('on_sta_probe_req', self.db_controller.insert_probe)
+
 		self.db_controller.setCallback('on_saved_ap_sta_found', self.signals.target.set_sta_saved_signal.emit)
 
 		self.pkt_sender.setCallback('on_send_deauth', self.sniffer.send)

@@ -463,6 +463,16 @@ class DBController(Callback):
 			self.db.insert_handshake(ap_id, sta, frame, f'M{m+1}')
 
 	@async_task
+	def insert_probe(self, probe_addr: str, ssid: str):
+		if self.db.row_exists2('probes', {'probe_addr': probe_addr, 'ssid': ssid}):
+			return
+		
+		self.db.insert('probes', {
+			'probe_addr': probe_addr,
+			'ssid': ssid
+		})
+
+	@async_task
 	def get_ap_db_exists(self, bssid: str):
 		ap = self.db.get_row('access_points', {
 			'bssid': bssid
@@ -539,9 +549,12 @@ class DBController(Callback):
 						eapol_dot11 = Dot11_Layer(radiotap=eapol_rt, pkt=eapol)
 						eapol_dBm_AntSignal = eapol_rt.get('dBm_AntSignal')
 
+						probes = self.db.get_rows('probes', {'probe_addr': sta['sta']})
+
 						if sta_id not in result[bssid]['stations']:
 							result[bssid]['stations'][sta_id] = {
 								'addr': sta_id,
+								'probes': probes,
 								'messages': {}
 							}
 						

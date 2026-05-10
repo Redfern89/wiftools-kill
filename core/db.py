@@ -46,6 +46,14 @@ class Database:
 				date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 			);
 		''')
+		self.execute_write('''
+			CREATE TABLE IF NOT EXISTS probes (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				probe_addr TEXT NOT NULL,
+				ssid TEXT NOT NULL,
+				date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+			);
+		''')
 		# Индекс ускорит поиск в sta_exists в сотни раз, когда база вырастет
 		self.execute_write('CREATE INDEX IF NOT EXISTS idx_ap_id_sta ON stations(ap_id, sta);')
 		self.execute_write('CREATE UNIQUE INDEX IF NOT EXISTS idx_bssid ON access_points(bssid);')
@@ -53,13 +61,34 @@ class Database:
 	def sta_exists(self, ap_id, sta):
 		cursor = self.execute_read('SELECT 1 FROM stations WHERE ap_id = ? AND sta = ? LIMIT 1;', (ap_id, sta))
 		return cursor.fetchone() is not None
-	
+
 	def row_exists(self, table: str, field: str, value: any) -> bool:
 		query = f'SELECT 1 FROM {table} WHERE {field} = ? LIMIT 1'
 		cursor = self.execute_read(query, (value,))
 
 		return cursor.fetchone() is not None
-	
+
+	def insert(self, table: str, fields: dict) -> int:
+		columns = ', '.join(fields.keys())
+		placeholders = ', '.join(['?'] * len(fields))
+		values = tuple(fields.values())
+
+		query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
+		cursor = self.execute_write(query, values)
+
+		return cursor.lastrowid
+
+	def row_exists2(self, table: str, criteria: dict) -> bool:
+		keys = criteria.keys()
+		where_clause = " AND ".join([f"{key} = ?" for key in keys])
+		values = tuple(criteria.values())
+
+		query = f"SELECT 1 FROM {table} WHERE {where_clause} LIMIT 1"
+		
+		cursor = self.execute_read(query, values)
+		return cursor.fetchone() is not None
+
+
 	def get_row(self, table: str, search_data: dict) -> dict:
 		conditions = " AND ".join([f"{key} = ?" for key in search_data.keys()])
 		values = tuple(search_data.values())
