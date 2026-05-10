@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import (
 	QStyledItemDelegate, QStyleOptionProgressBar, QStyle
 )
 
-from PyQt5.QtGui import QIcon, QPainter, QColor, QFont, QPalette
+from PyQt5.QtGui import QIcon, QPainter, QColor, QFont, QPalette, QPixmap
 from PyQt5.QtCore import Qt, QRect
 
 from datetime import datetime
@@ -234,6 +234,70 @@ class STADelegate(QStyledItemDelegate):
 			icon_rect = QRect(option.rect.left() + 37, option.rect.top() + 20, 16, 16)
 			icon.paint(painter, icon_rect, Qt.AlignLeft | Qt.AlignVCenter)
 			painter.drawText(option.rect.adjusted(57, +18, 0, 0), Qt.AlignLeft | Qt.AlignVCenter, date)
+			painter.restore()
+		else:
+			super().paint(painter, option, index)
+
+class MessageItemDelegate(QStyledItemDelegate):
+	def __init__(self, parent=None):
+		super().__init__(parent)
+
+	def paint(self, painter, option, index):
+		role = index.data(Qt.UserRole)
+
+		if role == 'MESSAGE':
+			painter.save()
+
+			if option.state & QStyle.State_Selected:
+				painter.fillRect(option.rect, option.palette.highlight())
+				painter.setPen(option.palette.highlightedText().color())
+
+			font_metrics = painter.fontMetrics()
+			line_height = font_metrics.height()
+			icon_size = 24
+
+			text = index.data(Qt.DisplayRole)
+			message_icon = index.data(Qt.DecorationRole)
+			flags = index.data(Qt.UserRole +1)
+
+			direction = 'right' if 'from_ds' in flags else 'left'
+
+			direction_icon = QIcon(f'resources/icons/{direction}-arrow.png')
+
+			flags = ','.join(flags)
+
+			message_icon_rect = QRect(option.rect.x() +3, option.rect.y() + 6, icon_size, icon_size)
+			direction_icon_rect = QRect(option.rect.x() +10, option.rect.y() + 20, 16, 16)
+
+			font = QFont()
+			font.setBold(True)
+			painter.setFont(font)
+
+			painter.drawText(
+				option.rect.x() + 33, option.rect.y() -10,
+				option.rect.width(), option.rect.height(), 
+				Qt.AlignLeft | Qt.AlignVCenter, 
+				text
+			)
+
+			font.setBold(False)
+			font.setItalic(True)
+			painter.setFont(font)
+
+			if option.state & QStyle.State_Selected:
+				painter.setPen(option.palette.highlightedText().color())
+			else:
+				painter.setPen(Qt.gray)
+
+			painter.drawText(
+				option.rect.x() + 33, option.rect.y()+7,
+				option.rect.width(), option.rect.height(), 
+				Qt.AlignLeft | Qt.AlignVCenter, 
+				f'({flags})'
+			)
+			message_icon.paint(painter, message_icon_rect, Qt.AlignVCenter)
+			direction_icon.paint(painter, direction_icon_rect, Qt.AlignVCenter)
+
 			painter.restore()
 		else:
 			super().paint(painter, option, index)

@@ -38,7 +38,6 @@ class IEEE80211_Hardware:
 
 		if result.returncode != 0:
 			pass
-			#raise Exception(result.stderr.decode())
 		else:
 			iface_data = json.loads(result.stdout.strip())
 			return iface_data[0]['flags']

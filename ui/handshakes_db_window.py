@@ -6,7 +6,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QFont, QPainte
 from PyQt5.QtCore import Qt, QSize, QItemSelection
 # Предполагаем, что ui.controls лежит рядом
 from ui.controls import Controls
-from ui.deligates import ProgressBarDelegate
+from ui.deligates import ProgressBarDelegate, MessageItemDelegate
 
 class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для примера, верни если нужно
 	def __init__(self, core=None, parent=None):
@@ -54,13 +54,14 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 		
 		self.tree_view.setModel(self.model)
 		self.tree_view.header().setStretchLastSection(True)
-		self.tree_view.setIconSize(QSize(24, 24))
+		self.tree_view.setIconSize(QSize(32, 32))
 		self.tree_view.setEditTriggers(QTreeView.NoEditTriggers)
 		self.tree_view.selectionModel().selectionChanged.connect(self.on_selection_changed)
 
 		self.tree_view.setColumnWidth(0, 200)
 		self.tree_view.setColumnWidth(1, 330)
 
+		self.tree_view.setItemDelegateForColumn(0, MessageItemDelegate(self.tree_view))
 		self.tree_view.setItemDelegateForColumn(1, ProgressBarDelegate(self.tree_view))
 		
 		layout.addWidget(self.tree_view)
@@ -142,11 +143,12 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 					eapol_messages = sta_data['messages']
 					
 					for message_type, message_data in eapol_messages.items():
-						direction_icon = 'right-arrow' if 'from_ds' in message_data['flags'] else 'left-arrow'
 						message_item = QStandardItem(
-							QIcon(f"resources/icons/{direction_icon}.png"),
-							f'{message_type}\nMESSAGE'
+							QIcon(f"resources/icons/message.png"),
+							message_type
 						)
+						message_item.setData('MESSAGE', Qt.UserRole)
+						message_item.setData(message_data['flags'], Qt.UserRole +1)
 						message_info_item = QStandardItem(str(message_data['rssi']))
 						message_info_item.setData('RSSI', Qt.UserRole)
 						message_date_item = QStandardItem(message_data['date'])
