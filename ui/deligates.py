@@ -252,21 +252,14 @@ class MessageItemDelegate(QStyledItemDelegate):
 				painter.fillRect(option.rect, option.palette.highlight())
 				painter.setPen(option.palette.highlightedText().color())
 
-			font_metrics = painter.fontMetrics()
-			line_height = font_metrics.height()
-			icon_size = 24
-
 			text = index.data(Qt.DisplayRole)
 			message_icon = index.data(Qt.DecorationRole)
 			flags = index.data(Qt.UserRole +1)
-
 			direction = 'right' if 'from_ds' in flags else 'left'
-
 			direction_icon = QIcon(f'resources/icons/{direction}-arrow.png')
-
 			flags = ','.join(flags)
 
-			message_icon_rect = QRect(option.rect.x() +3, option.rect.y() + 6, icon_size, icon_size)
+			message_icon_rect = QRect(option.rect.x() +3, option.rect.y() + 6, 24, 24)
 			direction_icon_rect = QRect(option.rect.x() +10, option.rect.y() + 20, 16, 16)
 
 			font = QFont()
