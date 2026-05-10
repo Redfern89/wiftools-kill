@@ -94,6 +94,7 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 
 						#message_info = f"{bssid_oui} {direction} {sta_oui}\nRSSI: {message_data['rssi']} dBm"
 						message_info_item = QStandardItem(str(message_data['rssi']))
+						message_info_item.setData('RSSI', Qt.UserRole)
 						message_date_item = QStandardItem(message_data['date'])
 						
 						sta_item.appendRow([message_item, message_info_item, message_date_item])

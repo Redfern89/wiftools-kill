@@ -349,14 +349,14 @@ class DeauthDialog(QDialog, Controls):
 				target=self.target
 			))
 
-		self.core.UISignals.start_target_signal.emit()
+		self.core.UISignals.target.start_signal.emit()
 		self.start_button.setEnabled(False)
 		self.stop_button.setEnabled(True)
 		self.deauth_button.setEnabled(True)
 		self.deauth_direct_button.setEnabled(True)
 
 	def stop(self):
-		self.core.UISignals.stop_target_signal.emit()
+		self.core.UISignals.target.stop_signal.emit()
 		self.start_button.setEnabled(True)
 		self.stop_button.setEnabled(False)
 		self.deauth_button.setEnabled(False)
@@ -391,7 +391,9 @@ class DeauthDialog(QDialog, Controls):
 		mac_item.setData(sta_mac, Qt.UserRole)
 
 		row.append(mac_item)
-		row.append(QStandardItem(str(sta_data['rssi'])))
+		rssi_item = QStandardItem(str(sta_data['rssi']))
+		rssi_item.setData('RSSI', Qt.UserRole)
+		row.append(rssi_item)
 		row.append(QStandardItem(str(sta_data['counters']['frames'])))
 		row.append(QStandardItem(str(acks_blocks)))
 		row.append(QStandardItem(rate))
@@ -490,7 +492,7 @@ class DeauthDialog(QDialog, Controls):
 		retries = int(self.deauth_retries_edit.value())
 		timeout = int(self.deauth_timeout_edit.value())
 
-		self.core.UISignals.target_send_deauth_signal.emit(self.bssid, sta_addr, reason_code, retries, attempts,timeout)
+		self.core.UISignals.target.send_deauth_signal.emit(self.bssid, sta_addr, reason_code, retries, attempts,timeout)
 
 	def deauth_done(self):
 		self.deauth_button.setEnabled(True)
@@ -516,6 +518,6 @@ class DeauthDialog(QDialog, Controls):
 
 	def closeEvent(self, a0):
 		if self.core:
-			self.core.UISignals.close_target_signal.emit()
+			self.core.UISignals.target.close_signal.emit()
 		
 		return super().closeEvent(a0)

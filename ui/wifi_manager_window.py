@@ -52,7 +52,7 @@ class WiFiManager(QDialog, Controls):
 		self.btn_refresh = self.create_button(
 			'refresh_button', 
 			'refresh',
-			self.core.UISignals.request_phys_signal.emit
+			self.core.UISignals.wifi.request_phys_signal.emit
 		)
 		self.btn_up = self.create_button(
 			'up_button',
@@ -96,7 +96,7 @@ class WiFiManager(QDialog, Controls):
 
 		self.compare_timer = QTimer()
 		self.compare_timer.setInterval(1000)
-		self.compare_timer.timeout.connect(self.core.UISignals.request_phys_signal.emit)
+		self.compare_timer.timeout.connect(self.core.UISignals.wifi.request_phys_signal.emit)
 		self.compare_timer.start()
 	
 	def on_selection_changed(self, selected: QItemSelection, deselected: QItemSelection):
@@ -135,7 +135,7 @@ class WiFiManager(QDialog, Controls):
 		mac = self.get_item_value(self.phys_table_model, row, 2, Qt.DisplayRole)
 		channels = self.get_item_value(self.phys_table_model, row, 2, Qt.UserRole +3)
 
-		self.core.UISignals.select_interface_signal.emit({
+		self.core.UISignals.wifi.select_interface_signal.emit({
 			'phy': phy,
 			'iface': iface,
 			'mac': mac,

@@ -133,7 +133,9 @@ class StationsTable(QWidget, Controls):
 			mac_item.setData(sta_addr, Qt.UserRole +2)
 
 			row.append(mac_item)
-			row.append(QStandardItem(str(sta_data['rssi'])))
+			rssi_item = QStandardItem(str(sta_data['rssi']))
+			rssi_item.setData('RSSI', Qt.UserRole)
+			row.append(rssi_item)
 			row.append(QStandardItem(str(sta_data['frames'])))
 			row.append(QStandardItem(rate))
 			row.append(QStandardItem(channel_flags))
@@ -182,7 +184,7 @@ class ScannerWindow(QMainWindow, Controls):
 		self.target_button = self.create_button(
 			'select_target_buton',
 			'target',
-			self.core.UISignals.show_target_signal.emit
+			self.core.UISignals.target.show_signal.emit
 		)
 
 		self.hex_button = self.create_button(
@@ -198,7 +200,7 @@ class ScannerWindow(QMainWindow, Controls):
 		self.handshakes_button = self.create_button(
 			'handshakes_button',
 			'key',
-			self.core.UISignals.handshakes_db_show_signal.emit
+			self.core.UISignals.handshakes.show_signal.emit
 		)
 
 		self.topLayout.addWidget(self.select_adapter_button)
@@ -302,7 +304,7 @@ class ScannerWindow(QMainWindow, Controls):
 			bssid = model.data(model.index(row, 0), Qt.UserRole +2)
 			channel = model.data(model.index(row, 1))
 
-			self.core.UISignals.show_target_signal.emit(self.interface, bssid, int(channel))
+			self.core.UISignals.target.show_signal.emit(self.interface, bssid, int(channel))
 
 	def update_col_by_row(self, model: QStandardItemModel, row: int, col: int, val: str):
 		item = model.item(row, col)
@@ -317,7 +319,7 @@ class ScannerWindow(QMainWindow, Controls):
 		self.running = True
 		
 		if self.signals:
-			self.signals.start_signal.emit()
+			self.signals.scanner.start_signal.emit()
 
 	def on_stop_btn(self):
 		self.start_button.setEnabled(True)
@@ -327,11 +329,11 @@ class ScannerWindow(QMainWindow, Controls):
 		self.running = False
 		
 		if self.signals:
-			self.signals.stop_signal.emit()
+			self.signals.scanner.stop_signal.emit()
 
 	def on_select_adapter_button(self):
 		if self.signals:
-			self.signals.show_wifi_manager_signal.emit()
+			self.signals.wifi.show_signal.emit()
 
 	def add_ap(self, ap_data):
 		row = []
@@ -347,7 +349,9 @@ class ScannerWindow(QMainWindow, Controls):
 		row.append(info_item)
 		row.append(QStandardItem(str(ap_data['channel_data']['ch'])))
 		row.append(QStandardItem(','.join(ap_data['vendors'])))
-		row.append(QStandardItem(str(ap_data['rssi'])))
+		rssi_item = QStandardItem(str(ap_data['rssi']))
+		rssi_item.setData('RSSI', Qt.UserRole)
+		row.append(rssi_item)
 		row.append(QStandardItem('/'.join(ap_data['encryption']['type'])))
 		row.append(QStandardItem(','.join(ap_data['encryption']['ciphers'])))
 		row.append(QStandardItem(','.join(ap_data['encryption']['akm'])))
@@ -460,6 +464,6 @@ class ScannerWindow(QMainWindow, Controls):
 
 	def closeEvent(self, a0):
 		if self.signals:
-			self.signals.close_signal.emit()
+			self.signals.scanner.close_signal.emit()
 		
 		return super().closeEvent(a0)

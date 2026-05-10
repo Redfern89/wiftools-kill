@@ -21,7 +21,7 @@ class UIController():
 	def show_wifi_manager(self):
 		if self.wifi_manager is None:
 			self.wifi_manager = WiFiManager(self.core)
-			self.core.UISignals.wifi_manager_created.emit()
+			self.core.UISignals.wifi.on_created.emit()
 
 		self.wifi_manager.show()
 

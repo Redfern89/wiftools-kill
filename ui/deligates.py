@@ -102,48 +102,51 @@ class ProgressBarDelegate(QStyledItemDelegate):
 		super().__init__(parent)
 
 	def paint(self, painter, option, index):
-		try:
-			if index.data():
-				rssi_value = int(index.data())
-			else:
-				rssi_value = 0
-		except ValueError:
-			return
+		if index.data(Qt.UserRole) and index.data(Qt.UserRole) == 'RSSI':
+			try:
+				if index.data():
+					rssi_value = int(index.data())
+				else:
+					rssi_value = 0
+			except ValueError:
+				return
 
-		if rssi_value:
-			signal_strength = int(scale_rssi(rssi_value, -85, -40, 0, 100))
-			padding = 6
-			bar_rect = option.rect.adjusted(padding, padding, -padding, -padding)
+			if rssi_value:
+				signal_strength = int(scale_rssi(rssi_value, -85, -40, 0, 100))
+				padding = 6
+				bar_rect = option.rect.adjusted(padding, padding, -padding, -padding)
 
-			if option.state & QStyle.State_Selected:
-				painter.fillRect(option.rect, option.palette.highlight())
+				if option.state & QStyle.State_Selected:
+					painter.fillRect(option.rect, option.palette.highlight())
 
-			progress_option = QStyleOptionProgressBar()
-			progress_option.rect = bar_rect
-			progress_option.minimum = 0
-			progress_option.maximum = 100
-			progress_option.progress = signal_strength
-			progress_option.text = f"{rssi_value} dBm"
-			progress_option.textVisible = True
-			progress_option.textAlignment = Qt.AlignCenter
+				progress_option = QStyleOptionProgressBar()
+				progress_option.rect = bar_rect
+				progress_option.minimum = 0
+				progress_option.maximum = 100
+				progress_option.progress = signal_strength
+				progress_option.text = f"{rssi_value} dBm"
+				progress_option.textVisible = True
+				progress_option.textAlignment = Qt.AlignCenter
 
-			progress_option.palette = option.palette
+				progress_option.palette = option.palette
 
-			if progress_option.progress > 55:
-				color = QColor("#2ecc71") # Зеленый
-			elif progress_option.progress > 45:
-				color = QColor("#f1c40f") # Желтый
-			else:
-				color = QColor("#e74c3c") # Красный
+				if progress_option.progress > 55:
+					color = QColor("#2ecc71") # Зеленый
+				elif progress_option.progress > 45:
+					color = QColor("#f1c40f") # Желтый
+				else:
+					color = QColor("#e74c3c") # Красный
 
-			progress_option.palette.setColor(QPalette.Highlight, color) # Зеленый
-			progress_option.palette.setColor(QPalette.HighlightedText, Qt.white)
-			progress_option.state |= QStyle.State_Enabled
+				progress_option.palette.setColor(QPalette.Highlight, color) # Зеленый
+				progress_option.palette.setColor(QPalette.HighlightedText, Qt.white)
+				progress_option.state |= QStyle.State_Enabled
 
-			painter.save()
-			painter.setRenderHint(QPainter.Antialiasing)
-			option.widget.style().drawControl(QStyle.CE_ProgressBar, progress_option, painter)
-			painter.restore()
+				painter.save()
+				painter.setRenderHint(QPainter.Antialiasing)
+				option.widget.style().drawControl(QStyle.CE_ProgressBar, progress_option, painter)
+				painter.restore()
+		else:
+			super().paint(painter, option, index)
 
 	def createEditor(self, parent, option, index):
 		return None

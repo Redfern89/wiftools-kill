@@ -1,6 +1,35 @@
 from PyQt5.QtCore import QObject, pyqtSignal
 
-class UISignals(QObject):
+class TargetSignals(QObject):
+	show_signal                  = pyqtSignal(str, str, int) # Iface, target bssid, channel
+	close_signal                 = pyqtSignal()
+	start_signal                 = pyqtSignal()
+	stop_signal                  = pyqtSignal()
+	set_first_data_signal        = pyqtSignal(dict) # AP First data
+	update_ap_signal             = pyqtSignal(dict) # AP Data
+	sta_found_signal             = pyqtSignal(dict) # STA Data
+	sta_update_signal            = pyqtSignal(str, dict) # STA Addr, STA Data
+	sta_probe_signal             = pyqtSignal(str, str) # STA Addr, SSID
+	eapol_recv_signal            = pyqtSignal(str, str, str) # src mac, dst mac, Message
+	eapol_error_signal           = pyqtSignal(str, str) # STA Addr, error message
+	eapol_done_signal            = pyqtSignal(str) # STA Addr
+	send_deauth_signal           = pyqtSignal(str, str, int, int, int, int) # AP Addr, STA Addr, reason, retries, attempts, timeout
+	on_deauth_signal             = pyqtSignal(str, str, int) # AP Addr, STA Addr, Reason code
+	on_deauth_done_signal        = pyqtSignal()
+	request_saved_sta            = pyqtSignal(str, str) # AP Addr, STA Addr
+	set_sta_saved_signal         = pyqtSignal(str, str, str) # AP Addr, STA Addr, Date
+	
+class WiFiManagerSignals(QObject):
+	show_signal                  = pyqtSignal()
+	on_created                   = pyqtSignal()
+	request_phys_signal          = pyqtSignal()
+	response_phys_signal         = pyqtSignal(dict) # not used
+	select_interface_signal      = pyqtSignal(dict) # Interface data
+	channel_change_signal        = pyqtSignal(str) # channel (Str)
+	change_iface_mode_signal     = pyqtSignal(str, str, str) # PHY, Iface, Mode
+	iface_updown_signal          = pyqtSignal(str, str) # Iface, state	
+
+class ScannerSignals(QObject):
 	ap_found_signal              = pyqtSignal(dict) # AP Data
 	ap_update_signal             = pyqtSignal(str, dict) # AP Addr, AP Data
 	start_signal                 = pyqtSignal()
@@ -12,37 +41,17 @@ class UISignals(QObject):
 	set_ap_saved_signal          = pyqtSignal(str) # AP Addr
 	set_sta_ap_saved_signal      = pyqtSignal(str, str, str) # AP Addr, STA Addr, Date
 	request_saved_ap_sta         = pyqtSignal(str, str) # AP Addr, STA Addr
+	
+class HandshakesDBSignals(QObject):
+	show_signal                  = pyqtSignal()
+	req_signal                   = pyqtSignal()
+	db_resp_signal               = pyqtSignal(dict) # Saved data	
 
-	show_wifi_manager_signal     = pyqtSignal()
-	wifi_manager_created         = pyqtSignal()
-	request_phys_signal          = pyqtSignal()
-	response_phys_signal         = pyqtSignal(dict) # not used
-	select_interface_signal      = pyqtSignal(dict) # Interface data
-	channel_change_signal        = pyqtSignal(str) # channel (Str)
-	change_iface_mode_signal     = pyqtSignal(str, str, str) # PHY, Iface, Mode
-	iface_updown_signal          = pyqtSignal(str, str) # Iface, state
-
-	show_target_signal           = pyqtSignal(str, str, int) # Iface, target bssid, channel
-	close_target_signal          = pyqtSignal()
-	start_target_signal          = pyqtSignal()
-	stop_target_signal           = pyqtSignal()
-	set_trget_first_data_signal  = pyqtSignal(dict) # AP First data
-	update_target_ap_signal      = pyqtSignal(dict) # AP Data
-	target_sta_found_signal      = pyqtSignal(dict) # STA Data
-	target_sta_update_signal     = pyqtSignal(str, dict) # STA Addr, STA Data
-	target_sta_probe_signal      = pyqtSignal(str, str) # STA Addr, SSID
-	target_eapol_recv_signal     = pyqtSignal(str, str, str) # src mac, dst mac, Message
-	target_eapol_error_signal    = pyqtSignal(str, str) # STA Addr, error message
-	target_eapol_done_signal     = pyqtSignal(str) # STA Addr
-	target_send_deauth_signal    = pyqtSignal(str, str, int, int, int, int) # AP Addr, STA Addr, reason, retries, attempts, timeout
-	target_on_deauth_signal      = pyqtSignal(str, str, int) # AP Addr, STA Addr, Reason code
-	target_on_deauth_done_signal = pyqtSignal()
-	target_request_saved_sta     = pyqtSignal(str, str) # AP Addr, STA Addr
-	trget_set_sta_saved_signal   = pyqtSignal(str, str, str) # AP Addr, STA Addr, Date
-
-	handshakes_db_show_signal    = pyqtSignal()
-	handshakes_db_req_signal     = pyqtSignal()
-	handshakes_db_resp_signal    = pyqtSignal(dict) # Saved data
-
+class UISignals(QObject):
 	def __init__(self):
 		super().__init__()
+
+		self.scanner             = ScannerSignals()
+		self.target              = TargetSignals()
+		self.wifi                = WiFiManagerSignals()
+		self.handshakes          = HandshakesDBSignals()
