@@ -153,8 +153,8 @@ class WiFiManager(QDialog, Controls):
 		iface = self.get_item_value(self.phys_table_model, row, 1, Qt.DisplayRole)
 
 		QApplication.setOverrideCursor(Qt.WaitCursor)
-		self.core.UISignals.iface_updown_signal.emit(iface, state)
-		self.core.UISignals.request_phys_signal.emit()
+		self.core.UISignals.wifi.iface_updown_signal.emit(iface, state)
+		self.core.UISignals.wifi.request_phys_signal.emit()
 		QApplication.restoreOverrideCursor()
 
 	def iface_mode_change(self):
@@ -167,8 +167,8 @@ class WiFiManager(QDialog, Controls):
 		iface = self.get_item_value(self.phys_table_model, row, 1, Qt.DisplayRole)
 
 		QApplication.setOverrideCursor(Qt.WaitCursor)
-		self.core.UISignals.change_iface_mode_signal.emit(phy, iface, mode)
-		self.core.UISignals.request_phys_signal.emit()
+		self.core.UISignals.wifi.change_iface_mode_signal.emit(phy, iface, mode)
+		self.core.UISignals.wifi.request_phys_signal.emit()
 		QApplication.restoreOverrideCursor()
 
 	def update_phys_list(self, data):
