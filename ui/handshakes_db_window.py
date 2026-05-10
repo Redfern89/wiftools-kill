@@ -83,16 +83,11 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 					eapol_messages = sta_data['messages']
 					
 					for message_type, message_data in eapol_messages.items():
-						icon = 'right-arrow' if 'from_ds' in message_data['flags'] else 'left-arrow'
+						direction_icon = 'right-arrow' if 'from_ds' in message_data['flags'] else 'left-arrow'
 						message_item = QStandardItem(
-							QIcon(f"resources/icons/{icon}.png"),
+							QIcon(f"resources/icons/{direction_icon}.png"),
 							f'{message_type}\nMESSAGE'
 						)
-						#direction = '>' if 'from_ds' in message_data['flags'] else '<'
-						bssid_oui = self.core.VendorOUI.get_oui_name_mixed(bssid)
-						sta_oui = self.core.VendorOUI.get_oui_name_mixed(sta_addr)
-
-						#message_info = f"{bssid_oui} {direction} {sta_oui}\nRSSI: {message_data['rssi']} dBm"
 						message_info_item = QStandardItem(str(message_data['rssi']))
 						message_info_item.setData('RSSI', Qt.UserRole)
 						message_date_item = QStandardItem(message_data['date'])
@@ -100,4 +95,4 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 						sta_item.appendRow([message_item, message_info_item, message_date_item])
 					
 				self.model.appendRow(ap_row)
-				self.tree_view.expandAll()
+				#self.tree_view.expandAll()
