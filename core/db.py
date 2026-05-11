@@ -62,12 +62,6 @@ class Database:
 		cursor = self.execute_read('SELECT 1 FROM stations WHERE ap_id = ? AND sta = ? LIMIT 1;', (ap_id, sta))
 		return cursor.fetchone() is not None
 
-	def row_exists(self, table: str, field: str, value: any) -> bool:
-		query = f'SELECT 1 FROM {table} WHERE {field} = ? LIMIT 1'
-		cursor = self.execute_read(query, (value,))
-
-		return cursor.fetchone() is not None
-
 	def insert(self, table: str, fields: dict) -> int:
 		columns = ', '.join(fields.keys())
 		placeholders = ', '.join(['?'] * len(fields))
@@ -78,7 +72,7 @@ class Database:
 
 		return cursor.lastrowid
 
-	def row_exists2(self, table: str, criteria: dict) -> bool:
+	def row_exists(self, table: str, criteria: dict) -> bool:
 		keys = criteria.keys()
 		where_clause = " AND ".join([f"{key} = ?" for key in keys])
 		values = tuple(criteria.values())
@@ -102,21 +96,18 @@ class Database:
 		
 		return None
 	
-	def get_rows(self, table: str, search_data: dict = None, group_by: str = None, limit: int = None) -> list:
+	def get_rows(self, table: str, search_data: dict = None, group_by: str = None, limit: int = None, logic: str = "AND") -> list:
 		query = f'SELECT * FROM {table}'
 		values = ()
 
-		# Формируем WHERE, если переданы данные для поиска
 		if search_data:
-			conditions = " AND ".join([f"{key} = ?" for key in search_data.keys()])
+			conditions = f" {logic} ".join([f"{key} = ?" for key in search_data.keys()])
 			query += f' WHERE {conditions}'
 			values = tuple(search_data.values())
 
-		# Добавляем GROUP BY, если указан
 		if group_by:
 			query += f' GROUP BY {group_by}'
 
-		# Добавляем LIMIT, если указан
 		if limit:
 			query += f' LIMIT {limit}'
 
@@ -128,38 +119,39 @@ class Database:
 			return [dict(zip(columns, row)) for row in rows]
 		
 		return []
-
-	def get_ap_id(self, bssid):
-		cursor = self.execute_read('SELECT id FROM access_points WHERE bssid = ? LIMIT 1;', (bssid,))
-		result = cursor.fetchone()
-		if result:
-			return result[0]
+	
+	def get_field(self, table: str, field: str, search_data: dict = None, logic: str = "AND") -> str:
+		qery = f'SELECT {field} FROM {table}'
+		if search_data:
+			conditions = f' {logic} '.join([f"{key} = ?" for key in search_data.keys()])
+			qery += f' WHERE {conditions}'
+			values = tuple(search_data.values())
 		
-		# Делаем вставку и сразу забираем ID до коммита или через спец. метод
-		cursor = self.connection.cursor()
-		cursor.execute('INSERT INTO access_points (bssid) VALUES (?);', (bssid,))
-		ap_id = cursor.lastrowid
-		self.connection.commit()
-		return ap_id
-
-	def insert_ap(self, bssid: str, beacon_data: bytes) -> int:
-		# 1. Пытаемся найти существующий ID
-		cursor = self.execute_read('SELECT id FROM access_points WHERE bssid = ? LIMIT 1;', (bssid,))
+		cursor = self.execute_read(qery, values)
 		result = cursor.fetchone()
-		if result:
-			return result[0]
 
-		# 2. Если не нашли, вставляем новую запись
-		# Используем сырой курсор, чтобы сразу забрать lastrowid до коммита
-		cursor = self.connection.cursor()
-		cursor.execute('''
-			INSERT INTO access_points (bssid, beacon) 
-			VALUES (?, ?);
-		''', (bssid, beacon_data))
+		return result[0] if result else None
+
+	def insert(self, table: str, data: dict) -> int:
+		columns = ', '.join(data.keys())
+		placeholders = ', '.join(['?' for _ in data])
 		
-		ap_id = cursor.lastrowid
+		query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
+		cursor = self.connection.execute(query, tuple(data.values()))
 		self.connection.commit()
-		return ap_id
+		
+		return cursor.lastrowid
+
+	def delete(self, table: str, search_data: dict = None, logic: str = "AND"):
+		query = f'DELETE FROM {table}'
+		values = ()
+
+		if search_data:
+			conditions = f" {logic} ".join([f"{key} = ?" for key in search_data.keys()])
+			query += f' WHERE {conditions}'
+			values = tuple(search_data.values())
+
+		self.execute_write(query, values)
 
 	def remove_sta(self, ap_id, sta):
 		self.execute_write('DELETE FROM stations WHERE ap_id = ? AND sta = ?;', (ap_id, sta))

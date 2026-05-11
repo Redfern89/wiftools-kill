@@ -438,6 +438,7 @@ class DBController(Callback):
 		# Запускаем воркера
 		threading.Thread(target=self._worker, daemon=True).start()
 
+	# Знаю, по идиотски, но умнее лень было придумывать. Лучше дергать db из основного потока, но так сойдет
 	def async_task(func):
 		"""Декоратор, который отправляет метод в очередь"""
 		@wraps(func)
@@ -457,14 +458,25 @@ class DBController(Callback):
 
 	@async_task
 	def insert_4way_handshake(self, beacon: bytes, bssid: str, sta: str, eapol_data: list):
-		ap_id = self.db.insert_ap(bssid, beacon)
-		self.db.remove_sta(ap_id, sta)
+		ap_id = self.db.get_field('access_points', 'id', {'bssid': bssid})
+		if ap_id is None:
+			ap_id = self.db.insert('access_points', {
+				'bssid': bssid,
+				'beacon': beacon
+			})
+		self.db.delete('stations', {'ap_id': ap_id, 'sta': sta})
+
 		for m, frame in enumerate(eapol_data):
-			self.db.insert_handshake(ap_id, sta, frame, f'M{m+1}')
+			self.db.insert('stations', {
+				'ap_id': ap_id,
+				'sta': sta,
+				'eapol': frame,
+				'message_type': f'M{m+1}'
+			})
 
 	@async_task
 	def insert_probe(self, probe_addr: str, ssid: str):
-		if self.db.row_exists2('probes', {'probe_addr': probe_addr, 'ssid': ssid}):
+		if self.db.row_exists('probes', {'probe_addr': probe_addr, 'ssid': ssid}):
 			return
 		
 		self.db.insert('probes', {
