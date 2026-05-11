@@ -17,11 +17,13 @@ class Database:
 		cursor = self.connection.cursor()
 		cursor.execute(query, params or ())
 		self.connection.commit()
+		
 		return cursor
 
 	def execute_read(self, query, params=None):
 		cursor = self.connection.cursor()
 		cursor.execute(query, params or ())
+
 		return cursor
 
 	def init_tables(self):

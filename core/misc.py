@@ -171,7 +171,6 @@ class IEEE80211_Utils:
 					}
 		return None	
 
-
 class VendorOUI:
 	def __init__(self):
 		self.ouiDB = {}
