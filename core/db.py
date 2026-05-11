@@ -7,7 +7,6 @@ class Database:
 		if not os.path.exists('resources/db'):
 			os.mkdir('resources/db')
 
-		# Сразу подключаемся при создании объекта
 		self.connection = sqlite3.connect(
 			'resources/db/wifi_scanner.db',
 			check_same_thread=False
@@ -15,14 +14,12 @@ class Database:
 		self.init_tables()
 
 	def execute_write(self, query, params=None):
-		"""Для INSERT, UPDATE, DELETE"""
 		cursor = self.connection.cursor()
 		cursor.execute(query, params or ())
 		self.connection.commit()
 		return cursor
 
 	def execute_read(self, query, params=None):
-		"""Для SELECT (без commit)"""
 		cursor = self.connection.cursor()
 		cursor.execute(query, params or ())
 		return cursor
@@ -54,13 +51,9 @@ class Database:
 				date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 			);
 		''')
-		# Индекс ускорит поиск в sta_exists в сотни раз, когда база вырастет
+
 		self.execute_write('CREATE INDEX IF NOT EXISTS idx_ap_id_sta ON stations(ap_id, sta);')
 		self.execute_write('CREATE UNIQUE INDEX IF NOT EXISTS idx_bssid ON access_points(bssid);')
-
-	def sta_exists(self, ap_id, sta):
-		cursor = self.execute_read('SELECT 1 FROM stations WHERE ap_id = ? AND sta = ? LIMIT 1;', (ap_id, sta))
-		return cursor.fetchone() is not None
 
 	def insert(self, table: str, fields: dict) -> int:
 		columns = ', '.join(fields.keys())
@@ -152,22 +145,6 @@ class Database:
 			values = tuple(search_data.values())
 
 		self.execute_write(query, values)
-
-	def remove_sta(self, ap_id, sta):
-		self.execute_write('DELETE FROM stations WHERE ap_id = ? AND sta = ?;', (ap_id, sta))
-
-	def insert_handshake(self, ap_id, sta, eapol_data, message_type):
-		self.execute_write('''
-			INSERT INTO stations (ap_id, sta, eapol, message_type) 
-			VALUES (?, ?, ?, ?);
-		''', (ap_id, sta, eapol_data, message_type))
-
-	def get_handshake(self, ap_id, sta):
-		cursor = self.execute_read('''
-			SELECT eapol, message_type FROM stations 
-			WHERE ap_id = ? AND sta = ? LIMIT 1;
-		''', (ap_id, sta))
-		return cursor.fetchone()  # Вернет (eapol, message_type) или None
 
 	def close(self):
 		if self.connection:
