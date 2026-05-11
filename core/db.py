@@ -54,6 +54,7 @@ class Database:
 
 		self.execute_write('CREATE INDEX IF NOT EXISTS idx_ap_id_sta ON stations(ap_id, sta);')
 		self.execute_write('CREATE UNIQUE INDEX IF NOT EXISTS idx_bssid ON access_points(bssid);')
+		self.execute_write('CREATE UNIQUE INDEX IF NOT EXISTS idx_probe ON probes(probe_addr);')
 
 	def insert(self, table: str, fields: dict) -> int:
 		columns = ', '.join(fields.keys())
