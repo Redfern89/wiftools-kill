@@ -25,6 +25,16 @@ class Database:
 		cursor.execute(query, params or ())
 
 		return cursor
+	
+	def make_conditions(self, search_data: dict = None, logic: str = "AND"):
+		if not search_data:
+			return "", ()
+
+		cond_list = [f"{key} = ?" for key in search_data.keys()]
+		conditions = f" {logic.upper()} ".join(cond_list)
+		values = tuple(search_data.values())
+
+		return conditions, values
 
 	def init_tables(self):
 		self.execute_write('''
@@ -57,49 +67,43 @@ class Database:
 		self.execute_write('CREATE INDEX IF NOT EXISTS idx_ap_id_sta ON stations(ap_id, sta);')
 		self.execute_write('CREATE UNIQUE INDEX IF NOT EXISTS idx_bssid ON access_points(bssid);')
 		self.execute_write('CREATE INDEX IF NOT EXISTS idx_probe ON probes(probe_addr);')
-
-	def insert(self, table: str, fields: dict) -> int:
-		columns = ', '.join(fields.keys())
-		placeholders = ', '.join(['?'] * len(fields))
-		values = tuple(fields.values())
-
-		query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
-		cursor = self.execute_write(query, values)
-
-		return cursor.lastrowid
-
-	def row_exists(self, table: str, criteria: dict) -> bool:
-		keys = criteria.keys()
-		where_clause = " AND ".join([f"{key} = ?" for key in keys])
-		values = tuple(criteria.values())
-
-		query = f"SELECT 1 FROM {table} WHERE {where_clause} LIMIT 1"
+	
+	def row_exists(self, table: str, search_data: dict, logic: str = "AND") -> bool:
+		if search_data:
+			query = f'SELECT 1 FROM {table}'
+			conditions, values = self.make_conditions(search_data=search_data, logic=logic)
+			query += f' WHERE {conditions} LIMIT 1'
+			cursor = self.execute_read(query, values)
+			
+			if cursor:
+				return cursor.fetchone() is not None
 		
-		cursor = self.execute_read(query, values)
-		return cursor.fetchone() is not None
+		return False
 
-	def get_row(self, table: str, search_data: dict) -> dict:
-		conditions = " AND ".join([f"{key} = ?" for key in search_data.keys()])
-		values = tuple(search_data.values())
+	def get_row(self, table: str, search_data: dict = None, logic: str = "AND") -> dict:
+		query = f'SELECT * FROM {table}'
+
+		conditions, values = self.make_conditions(search_data=search_data, logic=logic)
+		if conditions:
+			query += f' WHERE {conditions}'
 		
-		query = f'SELECT * FROM {table} WHERE {conditions} LIMIT 1'
+		query += ' LIMIT 1'
 		cursor = self.execute_read(query, values)
-		row = cursor.fetchone()
+		if cursor:
+			row = cursor.fetchone()
 
-		if row:
-			columns = [column[0] for column in cursor.description]
-			return dict(zip(columns, row))
+			if row:
+				columns = [column[0] for column in cursor.description]
+				return dict(zip(columns, row))
 		
 		return None
 	
 	def get_rows(self, table: str, search_data: dict = None, group_by: str = None, limit: int = None, logic: str = "AND") -> list:
 		query = f'SELECT * FROM {table}'
-		values = ()
+		conditions, values = self.make_conditions(search_data=search_data, logic=logic)
 
-		if search_data:
-			conditions = f" {logic} ".join([f"{key} = ?" for key in search_data.keys()])
+		if conditions:
 			query += f' WHERE {conditions}'
-			values = tuple(search_data.values())
 
 		if group_by:
 			query += f' GROUP BY {group_by}'
@@ -108,44 +112,50 @@ class Database:
 			query += f' LIMIT {limit}'
 
 		cursor = self.execute_read(query, values)
-		rows = cursor.fetchall()
+		if cursor:
+			rows = cursor.fetchall()
 
-		if rows:
-			columns = [column[0] for column in cursor.description]
-			return [dict(zip(columns, row)) for row in rows]
+			if rows:
+				columns = [column[0] for column in cursor.description]
+				return [dict(zip(columns, row)) for row in rows]
 		
 		return []
 	
-	def get_field(self, table: str, field: str, search_data: dict = None, logic: str = "AND") -> str:
-		qery = f'SELECT {field} FROM {table}'
-		if search_data:
-			conditions = f' {logic} '.join([f"{key} = ?" for key in search_data.keys()])
-			qery += f' WHERE {conditions}'
-			values = tuple(search_data.values())
+	def get_field(self, table: str, field: str, search_data: dict = None, logic: str = "AND") -> any:
+		query = f'SELECT {field} FROM {table}'
 		
-		cursor = self.execute_read(qery, values)
-		result = cursor.fetchone()
+		conditions, values = self.make_conditions(search_data=search_data, logic=logic)
+		if conditions:
+			query += f' WHERE {conditions}'
 
-		return result[0] if result else None
+		cursor = self.execute_read(query, values)
+		if cursor:
+			result = cursor.fetchone()
+			return result[0] if result else None
+
+		return None
 
 	def insert(self, table: str, data: dict) -> int:
 		columns = ', '.join(data.keys())
 		placeholders = ', '.join(['?' for _ in data])
 		
 		query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
-		cursor = self.connection.execute(query, tuple(data.values()))
-		self.connection.commit()
-		
-		return cursor.lastrowid
+		cursor = self.execute_write(query, tuple(data.values()))
+
+		if cursor:
+			return cursor.lastrowid
+
+		return None
 
 	def delete(self, table: str, search_data: dict = None, logic: str = "AND"):
+		if not search_data:
+			return
+		
 		query = f'DELETE FROM {table}'
-		values = ()
 
-		if search_data:
-			conditions = f" {logic} ".join([f"{key} = ?" for key in search_data.keys()])
+		conditions, values = self.make_conditions(search_data=search_data, logic=logic)
+		if conditions:
 			query += f' WHERE {conditions}'
-			values = tuple(search_data.values())
 
 		self.execute_write(query, values)
 

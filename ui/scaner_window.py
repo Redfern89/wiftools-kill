@@ -1,11 +1,11 @@
 from PyQt5.QtWidgets import (
 	QAbstractItemView, QLabel, QMainWindow, QTableView, QVBoxLayout, QHBoxLayout, QPushButton, 
-	QMessageBox, QApplication, QWidget, QStatusBar, QDialog
+	QMessageBox, QApplication, QWidget, QStatusBar, QTabWidget, QTreeView
 )
 from PyQt5.QtGui import QFont, QPixmap, QStandardItemModel, QStandardItem, QIcon, QPainter, QColor
 from PyQt5.QtCore import Q_ARG, QMetaObject, QEvent, Qt, QSize, QItemSelection, QTimer
 
-from ui.deligates import BSSIDDelegate, ProgressBarDelegate, WPSDelegate, MonoFontDelegate, STADelegate
+from ui.deligates import BSSIDDelegate, ProgressBarDelegate, WPSDelegate, MonoFontDelegate, STADelegate, ProbeBSSIDDelegate
 from ui.controls import Controls
 
 class StationsTable(QWidget, Controls):
@@ -46,9 +46,7 @@ class StationsTable(QWidget, Controls):
 		
 		self.sta_deligate = STADelegate(self.sta_table)
 		self.sta_table.setItemDelegateForColumn(0, self.sta_deligate)
-
-		self.progress_delegate = ProgressBarDelegate(self.sta_table)
-		self.sta_table.setItemDelegateForColumn(1, self.progress_delegate)
+		self.sta_table.setItemDelegateForColumn(1, ProgressBarDelegate(self.sta_table))
 
 		self.sta_table.setColumnWidth(0, 200)  # MAC
 		self.sta_table.setColumnWidth(1, 300)  # RSSI
@@ -109,7 +107,7 @@ class StationsTable(QWidget, Controls):
 			row = self.find_row_by_userrole(
 				baseModel=self.sta_table_model,
 				col=2,
-				value=sta_addr,
+				role_val=sta_addr,
 				role_index=0
 			)
 
@@ -238,8 +236,41 @@ class ScannerWindow(QMainWindow, Controls):
 		self.access_points_table.setItemDelegateForColumn(3, ProgressBarDelegate(self.access_points_table))
 		self.access_points_table.setItemDelegateForColumn(7, WPSDelegate(self.access_points_table))
 
+		self.probes_tree = QTreeView(self)
+		self.probes_tree_model = QStandardItemModel(0, 5, self)
+		self.probes_tree_model.setHorizontalHeaderLabels(self.core.Translations.getlist('probes_table_labels'))
+
+		self.probes_tree.setModel(self.probes_tree_model)
+		self.probes_tree.setEditTriggers(QTableView.NoEditTriggers)
+		self.probes_tree.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+		self.probes_tree.setIconSize(QSize(32, 32))
+		self.probes_tree.setItemDelegateForColumn(0, ProbeBSSIDDelegate(self.probes_tree))
+		self.probes_tree.setItemDelegateForColumn(2, MonoFontDelegate(self.probes_tree))
+		self.probes_tree.setItemDelegateForColumn(3, ProgressBarDelegate(self.probes_tree))
+
+		self.probes_tree.setColumnWidth(0, 250) # INFO
+		self.probes_tree.setColumnWidth(1, 50)  # Channel
+		self.probes_tree.setColumnWidth(2, 350) # Vendor
+		self.probes_tree.setColumnWidth(3, 400) # RSSI
+		self.probes_tree.setColumnWidth(4, 50) # Requests
+
+		self.tabs = QTabWidget(self)
+
+		self.scanner_tab = QWidget()
+		self.scanner_layout = QVBoxLayout(self.scanner_tab)
+		self.scanner_layout.addWidget(self.access_points_table)
+		self.tabs.addTab(self.scanner_tab, self.core.Translations.gettext('scanner_tab'))
+
+		self.probes_tab = QWidget()
+		self.probes_layout = QVBoxLayout(self.probes_tab)
+		self.probes_layout.addWidget(self.probes_tree)
+		self.tabs.addTab(self.probes_tab, self.core.Translations.gettext('probes_tab'))
+
+		self.tabs.setTabIcon(0, QIcon('resources/icons/satellite-dish.png'))
+		self.tabs.setTabIcon(1, QIcon('resources/icons/broadcast-media.png'))
+
 		self.mainLayout.addLayout(self.topLayout)
-		self.mainLayout.addWidget(self.access_points_table)
+		self.mainLayout.addWidget(self.tabs)
 
 		self.interfaceIconLabel = QLabel()
 		self.interfaceIconLabel.setPixmap(QPixmap('resources/icons/cancelled.png').scaled(26, 26, Qt.KeepAspectRatio))
@@ -339,7 +370,7 @@ class ScannerWindow(QMainWindow, Controls):
 		row = []
 
 		bssid = self.core.VendorOUI.get_oui_name_mixed(ap_data['bssid'])
-		info_item = QStandardItem(bssid)
+		info_item = QStandardItem(QIcon('resources/icons/wireless-router.png'), bssid)
 		info_item.setData('AP_ITEM', Qt.UserRole)
 		info_item.setData(ap_data['ssid'], Qt.UserRole +1)
 		info_item.setData(ap_data['bssid'], Qt.UserRole +2)
@@ -375,7 +406,7 @@ class ScannerWindow(QMainWindow, Controls):
 		row = self.find_row_by_userrole(
 			baseModel=self.access_points_table_model,
 			col=0,
-			value=bssid,
+			role_val=bssid,
 			role_index=2
 		)
 		self.update_col_by_row(self.access_points_table_model, row, 1, str(ap_data['channel_data']['ch']))
@@ -396,7 +427,7 @@ class ScannerWindow(QMainWindow, Controls):
 		row = self.find_row_by_userrole(
 			baseModel=self.access_points_table_model,
 			col=0,
-			value=ap_addr,
+			role_val=ap_addr,
 			role_index=2
 		)
 		if row != -1:
@@ -419,7 +450,7 @@ class ScannerWindow(QMainWindow, Controls):
 		row = self.find_row_by_userrole(
 			baseModel=self.access_points_table_model,
 			col=0,
-			value=ap_addr,
+			role_val=ap_addr,
 			role_index=2
 		)
 		if row != -1:
@@ -453,14 +484,72 @@ class ScannerWindow(QMainWindow, Controls):
 		row = self.find_row_by_userrole(
 			baseModel=self.access_points_table_model,
 			col=0,
-			value=ap_addr,
+			role_val=ap_addr,
 			role_index=2
 		)
+		#print(f'[UI] Upodate STA. ROW={row}, STA={sta_addr}')
 		if row != -1:
 			if self.has_nested_exists(row +1):
 				subitem_index = self.access_points_table_model.index(row + 1, 0)
 				stations_table = self.access_points_table.indexWidget(subitem_index)
-				stations_table.update_sta(sta_addr, sta_data)	
+				stations_table.update_sta(sta_addr, sta_data)
+
+	def add_probe_request(self, probe):
+		row = []
+
+		row_index = self.find_row_by_userrole(
+			baseModel=self.probes_tree_model,
+			col=0,
+			role_val=probe['addr'],
+			role_index=0
+		)
+		ssid = probe['ssid']
+
+		if row_index == -1:
+			probe_addr = self.core.VendorOUI.get_oui_name_mixed(probe['addr'])
+			info_item = QStandardItem(
+				QIcon('resources/icons/broadcast-media.png'), 
+				probe_addr
+			)
+			info_item.setData(probe['addr'], Qt.UserRole)
+			row.append(info_item)
+			self.probes_tree_model.appendRow(row)
+
+			probe_details_row = []
+			ssid_item = QStandardItem(QIcon('resources/icons/signal.png'), ssid)
+			
+			if ssid == '':
+				ssid_item.setData('HIDDEN', Qt.UserRole)
+			
+			probe_details_row.append(ssid_item)
+			probe_details_row.append(QStandardItem(str(probe['channel'])))
+			probe_details_row.append(QStandardItem(','.join(probe['vendors'])))
+
+			rssi_item = QStandardItem(str(probe['rssi']))
+			rssi_item.setData('RSSI', Qt.UserRole)
+			probe_details_row.append(rssi_item)
+			probe_details_row.append(QStandardItem(str(probe['requests'])))
+
+			info_item.appendRow(probe_details_row)
+		else:
+			info_item = self.probes_tree_model.item(row_index, 0)
+			probe_details_row = []
+			probe_details_row.append(QStandardItem(QIcon('resources/icons/signal.png'), ssid))
+			probe_details_row.append(QStandardItem(str(probe['channel'])))
+			probe_details_row.append(QStandardItem(','.join(probe['vendors'])))
+
+			rssi_item = QStandardItem(str(probe['rssi']))
+			rssi_item.setData('RSSI', Qt.UserRole)
+			probe_details_row.append(rssi_item)
+
+			probe_details_row.append(QStandardItem(str(probe['requests'])))
+
+			info_item.appendRow(probe_details_row)
+
+		self.probes_tree.expandAll()
+
+	def update_probe_request(self, probe_addr, probe_ssid, probe_data):
+		print(f'[UI] Porbe update. addr={probe_addr}, ssid={probe_ssid}, data={probe_data}')
 
 	def closeEvent(self, a0):
 		if self.signals:

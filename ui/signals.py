@@ -41,6 +41,8 @@ class ScannerSignals(QObject):
 	set_ap_saved_signal          = pyqtSignal(str) # AP Addr
 	set_sta_ap_saved_signal      = pyqtSignal(str, str, str) # AP Addr, STA Addr, Date
 	request_saved_ap_sta         = pyqtSignal(str, str) # AP Addr, STA Addr
+	probe_request                = pyqtSignal(dict) # Probe data
+	probe_request_update         = pyqtSignal(str, str, dict) # Probe addr, probe SSID, probe data
 	
 class HandshakesDBSignals(QObject):
 	show_signal                  = pyqtSignal()

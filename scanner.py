@@ -69,6 +69,9 @@ class Orchestrator:
 		self.signals.scanner.sta_found_signal.connect(win.add_sta)
 		self.signals.scanner.sta_update_signal.connect(win.update_sta)
 		self.signals.scanner.counts_update_signal.connect(win.update_counts)
+		self.signals.scanner.probe_request.connect(self.ui.scanner_window.add_probe_request)
+		self.signals.scanner.probe_request_update.connect(self.ui.scanner_window.update_probe_request)
+
 		self.signals.wifi.channel_change_signal.connect(win.on_channel_change)
 		
 		self.signals.scanner.set_ap_saved_signal.connect(win.set_ap_saved)
@@ -84,6 +87,8 @@ class Orchestrator:
 		self.pkt_controller.setCallback('on_sta_found', self.signals.scanner.sta_found_signal.emit)
 		self.pkt_controller.setCallback('on_sta_update', self.signals.scanner.sta_update_signal.emit)
 		self.pkt_controller.setCallback('on_counts_update', self.signals.scanner.counts_update_signal.emit)
+		self.pkt_controller.setCallback('on_probe_request', self.signals.scanner.probe_request.emit)
+		self.pkt_controller.setCallback('on_probe_request_update', self.signals.scanner.probe_request_update.emit)
 
 		self.signals.scanner.request_saved_ap_sta.connect(self.db_controller.get_ap_sta_db_exists)
 
@@ -118,6 +123,7 @@ class Orchestrator:
 		self.signals.scanner.sta_found_signal.connect(self.ui.scanner_window.add_sta)
 		self.signals.scanner.sta_update_signal.connect(self.ui.scanner_window.update_sta)
 		self.signals.scanner.counts_update_signal.connect(self.ui.scanner_window.update_counts)
+		
 
 	def _handle_iface_select(self, adapter):
 		self.sniffer.setIface(adapter['iface'])

@@ -95,10 +95,10 @@ class Controls:
 		indexes = baseTable.selectionModel().selectedIndexes()
 		return indexes[0].row() if indexes else None
 
-	def find_row_by_userrole(self, baseModel: QStandardItemModel, col: int, value: any, role_index: int):
+	def find_row_by_userrole(self, baseModel: QStandardItemModel, col: int, role_val: any, role_index: int):
 		for row in range(baseModel.rowCount()):
 			item = baseModel.item(row, col)
-			if item and item.data(Qt.UserRole + role_index) == value:
+			if item and item.data(Qt.UserRole + role_index) == role_val:
 				return row
 		return -1
 
@@ -106,7 +106,7 @@ class Controls:
 		row = self.find_row_by_userrole(
 			baseModel=baseModel,
 			col=col,
-			value=search_role_val,
+			role_val=search_role_val,
 			role_index=search_role_index
 		)
 		if row != -1:

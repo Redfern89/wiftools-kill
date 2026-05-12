@@ -51,6 +51,7 @@ class PcapController:
 class PacketController(Callback):
 	def __init__(self):
 		self.access_points = {}
+		self.probes = {}
 		self.access_points_cnt = 0
 		self.sta_cnt = 0
 		
@@ -63,6 +64,9 @@ class PacketController(Callback):
 		self.on_ap_found_bssid = None
 		self.on_sta_found_addr = None
 
+		self.on_probe_request = None
+		self.on_probe_request_update = None
+	
 	def process_packets(self, raw, ts):
 		RadioTap_PKT = RadioTap(raw)
 		Dot11 = Dot11_Layer(radiotap=RadioTap_PKT, pkt=raw)
@@ -73,6 +77,53 @@ class PacketController(Callback):
 
 		if rate is None:
 			rate = 0
+
+		# Ох и заебусь я тут
+		if Dot11.fc.type_subtype == 0x40: # Probe Request
+			elt = Dot11.Dot11Elt()
+			probe_ssid = IEEE80211_Utils.get_ap_ssid(elt)
+			probe_vendors = IEEE80211_Utils.get_ap_vendor(elt)
+			probe_addr = Dot11.addrs.addr2
+			
+			if not probe_addr in self.probes:
+				probe = {
+					'addr': probe_addr,
+					'ssid': probe_ssid,
+					'rssi': dBm_AntSignal,
+					'channel': channel.channel,
+					'vendors': probe_vendors,
+					'requests': 1
+				}
+				self.probes[probe_addr] = [probe]
+
+				if self.on_probe_request:
+					self.on_probe_request(probe)
+			else:
+				probe_exists = any(item['ssid'] == probe_ssid for item in self.probes[probe_addr])
+				if not probe_exists:
+					probe = {
+						'addr': probe_addr,
+						'ssid': probe_ssid,
+						'rssi': dBm_AntSignal,
+						'channel': channel.channel,
+						'vendors': probe_vendors,
+						'requests': 1
+					}
+					self.probes[probe_addr].append(probe)
+					if self.on_probe_request:
+						self.on_probe_request(probe)
+				else:
+					for item in self.probes[probe_addr]:
+						if item['ssid'] == probe_ssid:
+							item['rssi'] = dBm_AntSignal
+							item['requests'] += 1
+					
+							if self.on_probe_request_update:
+								self.on_probe_request_update(probe_addr, probe_ssid, {
+									'rssi': dBm_AntSignal,
+									'channel': channel.channel,
+									'requests': item['requests']
+								})
 
 		client = IEEE80211_Utils.handle_client(Dot11)
 		if client:
@@ -333,10 +384,10 @@ class TargetPacketController(Callback):
 
 				for mask, map in self.eapol_map.items():
 					if ((mask & 0x0FFF8) == (key_info & 0xFFF8)):
-						message, sta_addr_field, ap_addr_fielfd = map
+						message, sta_addr_field, ap_addr_field = map
 
 				sta_addr = getattr(Dot11.addrs, sta_addr_field)
-				ap_addr = getattr(Dot11.addrs, ap_addr_fielfd)
+				ap_addr = getattr(Dot11.addrs, ap_addr_field)
 
 				if sta_addr in self.stations and ap_addr == self.bssid:
 					#print(f"[KEY]: {key_info:04x}, replay={replay_counter}, message={message}, sta={sta_addr}, ds={ap_addr}, flags={Dot11.fc.flags}")

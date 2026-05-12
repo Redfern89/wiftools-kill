@@ -78,10 +78,14 @@
     "access_points_table_labels": ["Данные", "Канал", "Железо", "Уровень сигнала (RSSI)", "Шифрование", "Гр. шифры", "Пар. шифры", "WPS", "Маяки"],
     "sta_table_labels": ["Адрес", "Уровень сигнала (RSSI)", "Фреймы", "Битрейт/MCS", "Модуляция", "Probes"],
     "target_sta_table_labels": ["Адрес", "Уровень сигнала (RSSI)", "Фреймы", "ACKs/Blocks", "Битрейт/MCS", "Модуляция", "Флаги", "Probes"],
-    "probes_table_labels": ["MAC-адрес", "Имя сети", "Производитель"],
+    "probes_table_labels": ["Инфо", "Канал", "Производитель", "Уровень сигнала (RSSI)", "Запросы"],
     "log_table_labels": ["Событие", "Время"],
 
     "save_to_pcap_button": "Сохранить в .pcap",
     "delete_handshake_button": "Удалить хэндшейк",
-    "details_button": "Детальные данные"
+    "details_button": "Детальные данные",
+
+
+    "scanner_tab": "Сканер",
+    "probes_tab": "Probe-запросы"
 }

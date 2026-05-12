@@ -78,10 +78,13 @@
     "access_points_table_labels": ["Info", "Channel", "Vendor", "RSSI", "Encryption", "Ciphers", "AKM", "WPS", "Beacons"],
     "sta_table_labels": ["Adress", "RSSI", "Frames", "Rate/MCS", "Modulaction/Coding", "Probes"],
     "target_sta_table_labels": ["Adress", "RSSI", "Frames", "ACKs/Blocks", "Rate/MOD", "Modulation", "Flags", "Probes"],
-    "probes_table_labels": ["MAC", "SSID", "Vendor"],
+    "probes_table_labels": ["Info", "Channel", "Vendor", "RSSI", "Requests"],
     "log_table_labels": ["Event", "Time"],
 
     "save_to_pcap_button": "Save to .pcap",
     "delete_handshake_button": "Delete handshake",
-    "details_button": "Details"
+    "details_button": "Details",
+
+    "scanner_tab": "Scanner",
+    "probes_tab": "Probes"
 }

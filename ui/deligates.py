@@ -39,9 +39,48 @@ class MACDeligate(QStyledItemDelegate):
 		else:
 			super().paint(painter, option, index)
 
+class ProbeBSSIDDelegate(QStyledItemDelegate):
+	def sizeHint(self, option, index):
+		size = super().sizeHint(option, index)
+		size.setHeight(40) 
+		return size
+	
+	def __init__(self, parent=None):
+		super().__init__(parent)
+
+	def paint(self, painter, option, index):
+		state = index.data(Qt.UserRole)
+
+		if state == 'HIDDEN':
+			painter.save()
+			icon = index.data(Qt.DecorationRole)
+
+			font = QFont()
+			font.setUnderline(True)
+			painter.setFont(font)
+
+			if option.state & QStyle.State_Selected:
+				painter.fillRect(option.rect, option.palette.highlight())
+				painter.setPen(option.palette.highlightedText().color())
+			else:
+				painter.setPen(Qt.red)
+			
+			painter.drawText(option.rect.adjusted(40, -4, 0, 0), Qt.AlignLeft | Qt.AlignVCenter, '<hidden>')
+			if icon:
+				icon.paint(painter, option.rect, Qt.AlignLeft | Qt.AlignVCenter)
+
+			painter.restore()
+		else:
+			super().paint(painter, option, index)
+
 class BSSIDDelegate(QStyledItemDelegate):
 	def __init__(self, parent=None):
 		super().__init__(parent)
+
+	def sizeHint(self, option, index):
+		size = super().sizeHint(option, index)
+		size.setHeight(40) 
+		return size
 
 	def paint(self, painter, option, index):
 		mixed_mac = index.data(Qt.DisplayRole)
@@ -51,27 +90,29 @@ class BSSIDDelegate(QStyledItemDelegate):
 		saved = index.data(Qt.UserRole +3)
 		saved_date = index.data(Qt.UserRole +4)
 		hidden_net = index.data(Qt.UserRole +5)
-		
-		if item_type == 'AP_ITEM':
+		icon = index.data(Qt.DecorationRole)
+
+		if item_type in ['AP_ITEM', 'PROBE_ITEM']:
 			painter.save()
 
-			icon = QIcon('resources/icons/wireless-router.png')
-			icon.paint(painter, option.rect.adjusted(1, 1, -1, -1), Qt.AlignLeft | Qt.AlignVCenter)
 			font = QFont()
 			font.setBold(True)
 			painter.setFont(font)
 
+			if option.state & QStyle.State_Selected:
+				painter.fillRect(option.rect, option.palette.highlight())
+				painter.setPen(option.palette.highlightedText().color())
+
+			if icon:
+				icon.paint(painter, option.rect.adjusted(1, 1, -1, -1), Qt.AlignLeft | Qt.AlignVCenter)
+
 			if saved == 'SAVED':
-				icon = QIcon('resources/icons/diskette.png')
+				state_icon = QIcon('resources/icons/diskette.png')
 				rect = QRect(option.rect.x() +20, option.rect.y() +20, 16, 16)
-				icon.paint(painter, rect, Qt.AlignLeft | Qt.AlignVCenter)
+				state_icon.paint(painter, rect, Qt.AlignLeft | Qt.AlignVCenter)
 				painter.setPen(QColor('#3B9400'))
 				font.setUnderline(True)
 				painter.setFont(font)
-
-			if option.state & QStyle.State_Selected:
-				#painter.fillRect(option.rect, option.palette.highlight())
-				painter.setPen(option.palette.highlightedText().color())
 
 			if hidden_net == 'HIDDEN':
 				font.setUnderline(True)

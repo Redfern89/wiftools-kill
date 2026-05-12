@@ -2,4 +2,4 @@ __pycache__
 core/__pycache__
 ui/__pycache__
 test.py
-resources/db/*.db
+resources/db/*
