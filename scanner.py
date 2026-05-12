@@ -71,11 +71,10 @@ class Orchestrator:
 		self.signals.scanner.counts_update_signal.connect(win.update_counts)
 		self.signals.scanner.probe_request.connect(self.ui.scanner_window.add_probe_request)
 		self.signals.scanner.probe_request_update.connect(self.ui.scanner_window.update_probe_request)
-
-		self.signals.wifi.channel_change_signal.connect(win.on_channel_change)
-		
 		self.signals.scanner.set_ap_saved_signal.connect(win.set_ap_saved)
 		self.signals.scanner.set_sta_ap_saved_signal.connect(win.set_ap_sta_saved)
+
+		self.signals.wifi.channel_change_signal.connect(win.on_channel_change)
 		
 
 	def _setup_initial_callbacks(self):

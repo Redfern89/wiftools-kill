@@ -85,8 +85,13 @@ class PacketController(Callback):
 			probe_vendors = IEEE80211_Utils.get_ap_vendor(elt)
 			probe_addr = Dot11.addrs.addr2
 			
-			if not probe_addr in self.probes:
-				probe = {
+			if probe_addr not in self.probes:
+				self.probes[probe_addr] = []
+
+			target_probe = next((item for item in self.probes[probe_addr] if item['ssid'] == probe_ssid), None)
+
+			if not target_probe:
+				new_probe = {
 					'addr': probe_addr,
 					'ssid': probe_ssid,
 					'rssi': dBm_AntSignal,
@@ -94,36 +99,19 @@ class PacketController(Callback):
 					'vendors': probe_vendors,
 					'requests': 1
 				}
-				self.probes[probe_addr] = [probe]
-
+				self.probes[probe_addr].append(new_probe)
 				if self.on_probe_request:
-					self.on_probe_request(probe)
+					self.on_probe_request(new_probe)
 			else:
-				probe_exists = any(item['ssid'] == probe_ssid for item in self.probes[probe_addr])
-				if not probe_exists:
-					probe = {
-						'addr': probe_addr,
-						'ssid': probe_ssid,
+				target_probe['rssi'] = dBm_AntSignal
+				target_probe['requests'] += 1
+				
+				if self.on_probe_request_update:
+					self.on_probe_request_update(probe_addr, probe_ssid, {
 						'rssi': dBm_AntSignal,
 						'channel': channel.channel,
-						'vendors': probe_vendors,
-						'requests': 1
-					}
-					self.probes[probe_addr].append(probe)
-					if self.on_probe_request:
-						self.on_probe_request(probe)
-				else:
-					for item in self.probes[probe_addr]:
-						if item['ssid'] == probe_ssid:
-							item['rssi'] = dBm_AntSignal
-							item['requests'] += 1
-					
-							if self.on_probe_request_update:
-								self.on_probe_request_update(probe_addr, probe_ssid, {
-									'rssi': dBm_AntSignal,
-									'channel': channel.channel,
-									'requests': item['requests']
-								})
+						'requests': target_probe['requests'] # Берем строго из объекта
+					})
 
 		client = IEEE80211_Utils.handle_client(Dot11)
 		if client:

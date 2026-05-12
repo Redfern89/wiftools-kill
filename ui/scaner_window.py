@@ -503,10 +503,11 @@ class ScannerWindow(QMainWindow, Controls):
 			role_val=probe['addr'],
 			role_index=0
 		)
-		ssid = probe['ssid']
+		ssid = probe['ssid'].strip()
+
+		probe_addr = self.core.VendorOUI.get_oui_name_mixed(probe['addr'])
 
 		if row_index == -1:
-			probe_addr = self.core.VendorOUI.get_oui_name_mixed(probe['addr'])
 			info_item = QStandardItem(
 				QIcon('resources/icons/broadcast-media.png'), 
 				probe_addr
@@ -518,7 +519,7 @@ class ScannerWindow(QMainWindow, Controls):
 			probe_details_row = []
 			ssid_item = QStandardItem(QIcon('resources/icons/signal.png'), ssid)
 			
-			if ssid == '':
+			if ssid == '' or len(ssid) == 0:
 				ssid_item.setData('HIDDEN', Qt.UserRole)
 			
 			probe_details_row.append(ssid_item)
@@ -541,7 +542,6 @@ class ScannerWindow(QMainWindow, Controls):
 			rssi_item = QStandardItem(str(probe['rssi']))
 			rssi_item.setData('RSSI', Qt.UserRole)
 			probe_details_row.append(rssi_item)
-
 			probe_details_row.append(QStandardItem(str(probe['requests'])))
 
 			info_item.appendRow(probe_details_row)
@@ -549,7 +549,8 @@ class ScannerWindow(QMainWindow, Controls):
 		self.probes_tree.expandAll()
 
 	def update_probe_request(self, probe_addr, probe_ssid, probe_data):
-		print(f'[UI] Porbe update. addr={probe_addr}, ssid={probe_ssid}, data={probe_data}')
+		#print(f'[UI] Porbe update. addr={probe_addr}, ssid={probe_ssid}, data={probe_data}')
+		pass
 
 	def closeEvent(self, a0):
 		if self.signals:
