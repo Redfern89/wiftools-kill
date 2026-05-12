@@ -50,28 +50,34 @@ class ProbeBSSIDDelegate(QStyledItemDelegate):
 
 	def paint(self, painter, option, index):
 		state = index.data(Qt.UserRole)
+		text = index.data(Qt.DisplayRole)
+
+		painter.save()
+		icon = index.data(Qt.DecorationRole)
+
+		if option.state & QStyle.State_Selected:
+			painter.fillRect(option.rect, option.palette.highlight())
+			painter.setPen(option.palette.highlightedText().color())
 
 		if state == 'HIDDEN':
-			painter.save()
-			icon = index.data(Qt.DecorationRole)
-
-			font = QFont()
-			font.setUnderline(True)
-			painter.setFont(font)
-
 			if option.state & QStyle.State_Selected:
 				painter.fillRect(option.rect, option.palette.highlight())
 				painter.setPen(option.palette.highlightedText().color())
 			else:
 				painter.setPen(Qt.red)
-			
-			painter.drawText(option.rect.adjusted(40, -4, 0, 0), Qt.AlignLeft | Qt.AlignVCenter, '<hidden>')
-			if icon:
-				icon.paint(painter, option.rect, Qt.AlignLeft | Qt.AlignVCenter)
+			font = QFont()
+			font.setUnderline(True)
+			painter.setFont(font)
 
-			painter.restore()
+			painter.drawText(option.rect.adjusted(40, 0, 0, 0), Qt.AlignLeft | Qt.AlignVCenter, '<hidden>')
 		else:
-			super().paint(painter, option, index)
+			painter.drawText(option.rect.adjusted(40, 0, 0, 0), Qt.AlignLeft | Qt.AlignVCenter, text)
+
+		if icon:
+			icon_rect = QRect(option.rect.x()+4, option.rect.y()+5, 32, 32)
+			icon.paint(painter, icon_rect, Qt.AlignLeft | Qt.AlignVCenter)
+
+		painter.restore()
 
 class BSSIDDelegate(QStyledItemDelegate):
 	def __init__(self, parent=None):

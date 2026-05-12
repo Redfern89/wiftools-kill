@@ -106,9 +106,9 @@ class StationsTable(QWidget, Controls):
 			sta_addr = sta_data['addrs']['client_addr']
 			row = self.find_row_by_userrole(
 				baseModel=self.sta_table_model,
-				col=2,
+				col=0,
 				role_val=sta_addr,
-				role_index=0
+				role_index=2
 			)
 
 			rate, channel_flags = self.make_channel_mcs(sta_data)
@@ -153,7 +153,7 @@ class ScannerWindow(QMainWindow, Controls):
 		self.centralWidget = QWidget()
 		self.setCentralWidget(self.centralWidget)
 
-		self.setFixedSize(1180, 620)
+		self.setFixedSize(1280, 620)
 		self.setWindowTitle("WiFi Scanner advanced")
 
 		self.mainLayout = QVBoxLayout(self.centralWidget)
@@ -243,7 +243,7 @@ class ScannerWindow(QMainWindow, Controls):
 		self.probes_tree.setModel(self.probes_tree_model)
 		self.probes_tree.setEditTriggers(QTableView.NoEditTriggers)
 		self.probes_tree.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
-		self.probes_tree.setIconSize(QSize(32, 32))
+		self.probes_tree.setIconSize(QSize(40, 40))
 		self.probes_tree.setItemDelegateForColumn(0, ProbeBSSIDDelegate(self.probes_tree))
 		self.probes_tree.setItemDelegateForColumn(2, MonoFontDelegate(self.probes_tree))
 		self.probes_tree.setItemDelegateForColumn(3, ProgressBarDelegate(self.probes_tree))
@@ -487,7 +487,6 @@ class ScannerWindow(QMainWindow, Controls):
 			role_val=ap_addr,
 			role_index=2
 		)
-		#print(f'[UI] Upodate STA. ROW={row}, STA={sta_addr}')
 		if row != -1:
 			if self.has_nested_exists(row +1):
 				subitem_index = self.access_points_table_model.index(row + 1, 0)
@@ -509,7 +508,7 @@ class ScannerWindow(QMainWindow, Controls):
 
 		if row_index == -1:
 			info_item = QStandardItem(
-				QIcon('resources/icons/broadcast-media.png'), 
+				QIcon('resources/icons/signal.png'), 
 				probe_addr
 			)
 			info_item.setData(probe['addr'], Qt.UserRole)
@@ -517,7 +516,7 @@ class ScannerWindow(QMainWindow, Controls):
 			self.probes_tree_model.appendRow(row)
 
 			probe_details_row = []
-			ssid_item = QStandardItem(QIcon('resources/icons/signal.png'), ssid)
+			ssid_item = QStandardItem(QIcon('resources/icons/broadcast-media.png'), ssid)
 			
 			if ssid == '' or len(ssid) == 0:
 				ssid_item.setData('HIDDEN', Qt.UserRole)
@@ -535,7 +534,12 @@ class ScannerWindow(QMainWindow, Controls):
 		else:
 			info_item = self.probes_tree_model.item(row_index, 0)
 			probe_details_row = []
-			probe_details_row.append(QStandardItem(QIcon('resources/icons/signal.png'), ssid))
+			
+			ssid_item = QStandardItem(QIcon('resources/icons/broadcast-media.png'), ssid)
+			if ssid == '' or len(ssid) == 0:
+				ssid_item.setData('HIDDEN', Qt.UserRole)
+			
+			probe_details_row.append(ssid_item)
 			probe_details_row.append(QStandardItem(str(probe['channel'])))
 			probe_details_row.append(QStandardItem(','.join(probe['vendors'])))
 

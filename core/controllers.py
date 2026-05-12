@@ -649,7 +649,6 @@ class PacketSender(Callback):
 		thread = threading.Thread(target=run, daemon=True)
 		thread.start()
 		
-
 class WifiManagerController:
 	def __init__(self):
 		self.IEEE80211_MODES = {
