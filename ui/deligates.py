@@ -50,6 +50,7 @@ class ProbeBSSIDDelegate(QStyledItemDelegate):
 
 	def paint(self, painter, option, index):
 		state = index.data(Qt.UserRole)
+		bold = index.data(Qt.UserRole +1)
 		text = index.data(Qt.DisplayRole)
 
 		painter.save()
@@ -58,6 +59,11 @@ class ProbeBSSIDDelegate(QStyledItemDelegate):
 		if option.state & QStyle.State_Selected:
 			painter.fillRect(option.rect, option.palette.highlight())
 			painter.setPen(option.palette.highlightedText().color())
+
+		if bold:
+			font = QFont()
+			font.setBold(True)
+			painter.setFont(font)
 
 		if state == 'HIDDEN':
 			if option.state & QStyle.State_Selected:

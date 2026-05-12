@@ -54,6 +54,8 @@ class PacketController(Callback):
 		self.probes = {}
 		self.access_points_cnt = 0
 		self.sta_cnt = 0
+
+		self.raw_data = []
 		
 		self.on_ap_found = None
 		self.on_ap_update = None
@@ -102,6 +104,7 @@ class PacketController(Callback):
 				self.probes[probe_addr].append(new_probe)
 				if self.on_probe_request:
 					self.on_probe_request(new_probe)
+					self.raw_data.append(raw)
 			else:
 				target_probe['rssi'] = dBm_AntSignal
 				target_probe['requests'] += 1
@@ -140,6 +143,7 @@ class PacketController(Callback):
 						
 					if self.on_sta_found:
 						self.on_sta_found(ap_addr, sta_addr, sta)
+						self.raw_data.append(raw)
 						#self.on_sta_found_addr(ap_addr, sta_addr)
 					
 					if self.on_sta_found_addr:
@@ -188,6 +192,7 @@ class PacketController(Callback):
 
 			if Dot11.addrs.addr3 not in self.access_points:
 				self.access_points_cnt += 1
+				self.raw_data.append(raw)
 
 				if self.on_counts_update:
 					self.on_counts_update(self.access_points_cnt, self.sta_cnt)

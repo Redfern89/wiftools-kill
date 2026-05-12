@@ -6,6 +6,7 @@
     "select_target_buton": "Select target",
     "hex_button": "View HEX-data",
     "settings_button": "Settings",
+    "save_dump_button": "Save current dump",
     "handshakes_button": "Handshakes manager",
     "iface_not_selected": "Interface not selected",
     "hopper_status_label": "Interface: <b>{iface}</b>, CH: <b>{channel}</b>",

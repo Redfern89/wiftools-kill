@@ -179,6 +179,11 @@ class ScannerWindow(QMainWindow, Controls):
 			False
 		)
 
+		self.save_dump_button = self.create_button(
+			'save_dump_button',
+			'diskette'
+		)
+
 		self.target_button = self.create_button(
 			'select_target_buton',
 			'target',
@@ -204,6 +209,7 @@ class ScannerWindow(QMainWindow, Controls):
 		self.topLayout.addWidget(self.select_adapter_button)
 		self.topLayout.addWidget(self.start_button)
 		self.topLayout.addWidget(self.stop_button)
+		self.topLayout.addWidget(self.save_dump_button)
 		self.topLayout.addWidget(self.target_button)
 		self.topLayout.addWidget(self.hex_button)
 		self.topLayout.addWidget(self.settings_button)
@@ -244,6 +250,7 @@ class ScannerWindow(QMainWindow, Controls):
 		self.probes_tree.setEditTriggers(QTableView.NoEditTriggers)
 		self.probes_tree.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
 		self.probes_tree.setIconSize(QSize(40, 40))
+		self.probes_tree.header().setDefaultAlignment(Qt.AlignCenter)
 		self.probes_tree.setItemDelegateForColumn(0, ProbeBSSIDDelegate(self.probes_tree))
 		self.probes_tree.setItemDelegateForColumn(2, MonoFontDelegate(self.probes_tree))
 		self.probes_tree.setItemDelegateForColumn(3, ProgressBarDelegate(self.probes_tree))
@@ -251,8 +258,8 @@ class ScannerWindow(QMainWindow, Controls):
 		self.probes_tree.setColumnWidth(0, 250) # INFO
 		self.probes_tree.setColumnWidth(1, 50)  # Channel
 		self.probes_tree.setColumnWidth(2, 350) # Vendor
-		self.probes_tree.setColumnWidth(3, 400) # RSSI
-		self.probes_tree.setColumnWidth(4, 50) # Requests
+		self.probes_tree.setColumnWidth(3, 480) # RSSI
+		self.probes_tree.setColumnWidth(4, 50)  # Requests
 
 		self.tabs = QTabWidget(self)
 
@@ -512,15 +519,16 @@ class ScannerWindow(QMainWindow, Controls):
 				probe_addr
 			)
 			info_item.setData(probe['addr'], Qt.UserRole)
+			info_item.setData('BOLD', Qt.UserRole +1)
 			row.append(info_item)
 			self.probes_tree_model.appendRow(row)
 
 			probe_details_row = []
 			ssid_item = QStandardItem(QIcon('resources/icons/broadcast-media.png'), ssid)
-			
+
 			if ssid == '' or len(ssid) == 0:
 				ssid_item.setData('HIDDEN', Qt.UserRole)
-			
+
 			probe_details_row.append(ssid_item)
 			probe_details_row.append(QStandardItem(str(probe['channel'])))
 			probe_details_row.append(QStandardItem(','.join(probe['vendors'])))
@@ -538,7 +546,7 @@ class ScannerWindow(QMainWindow, Controls):
 			ssid_item = QStandardItem(QIcon('resources/icons/broadcast-media.png'), ssid)
 			if ssid == '' or len(ssid) == 0:
 				ssid_item.setData('HIDDEN', Qt.UserRole)
-			
+
 			probe_details_row.append(ssid_item)
 			probe_details_row.append(QStandardItem(str(probe['channel'])))
 			probe_details_row.append(QStandardItem(','.join(probe['vendors'])))
@@ -553,8 +561,20 @@ class ScannerWindow(QMainWindow, Controls):
 		self.probes_tree.expandAll()
 
 	def update_probe_request(self, probe_addr, probe_ssid, probe_data):
-		#print(f'[UI] Porbe update. addr={probe_addr}, ssid={probe_ssid}, data={probe_data}')
-		pass
+		row_index = self.find_row_by_userrole(
+			baseModel=self.probes_tree_model,
+			col=0,
+			role_val=probe_addr,
+			role_index=0
+		)
+		if row_index != -1:
+			parent_item = self.probes_tree_model.item(row_index, 0)
+			for i in range(parent_item.rowCount()):
+				child_item = parent_item.child(i, 0)
+				if child_item.text() == probe_ssid:
+					parent_item.child(i, 1).setText(str(probe_data['channel']))
+					parent_item.child(i, 3).setText(str(probe_data['rssi']))
+					parent_item.child(i, 4).setText(str(probe_data['requests']))
 
 	def closeEvent(self, a0):
 		if self.signals:

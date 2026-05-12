@@ -6,6 +6,7 @@
     "select_target_buton": "Выбор цели",
     "hex_button": "Просмотр HEX-данных",
     "settings_button": "Натройки",
+    "save_dump_button": "Сохранить текущие данные",
     "handshakes_button": "Менеджер хендшейков",
     "iface_not_selected": "Интерфейс не выбран",
     "hopper_status_label": "Интерфейс: <b>{iface}</b>, канал: <b>{channel}</b>",
