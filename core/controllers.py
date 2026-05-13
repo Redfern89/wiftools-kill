@@ -116,6 +116,11 @@ class PacketController(Callback):
 						'requests': target_probe['requests'] # Берем строго из объекта
 					})
 
+			for bssid, ap_data in self.access_points.items():
+				for sta_addr, sta_data in ap_data['clients'].items():
+					if sta_addr == probe_addr:
+						self.access_points[bssid]['clients'][sta_addr]['probes'].append(probe_ssid)
+
 		client = IEEE80211_Utils.handle_client(Dot11)
 		if client:
 			ap_addr = client['ap_addr']
@@ -130,7 +135,8 @@ class PacketController(Callback):
 					'rssi': dBm_AntSignal,
 					'mcs': mcs,
 					'channel': channel,
-					'frames': 1
+					'frames': 1,
+					'probes': []
 				}
 				if sta_addr not in self.access_points[ap_addr]['clients']:
 					self.sta_cnt += 1
@@ -369,7 +375,7 @@ class TargetPacketController(Callback):
 						'beacons_lost': beacons_lost
 					})
 
-		if Dot11.fc.type_subtype in [0x08, 0x88]:
+		if Dot11.fc.type_subtype in [0x08, 0x88]: # Data, QoS Data
 			EAPOL = Dot11.Dot11EAPOL()
 			if EAPOL:
 				key_info = EAPOL.data.key_info

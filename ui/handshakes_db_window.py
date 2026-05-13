@@ -167,6 +167,16 @@ class HandshakesDBDialog(QDialog, Controls): # Убрал Controls для при
 						probe_ssid = QStandardItem(probe['ssid'])
 						probe_date = QStandardItem(probe['date'])
 						sta_item.appendRow([probe_item, probe_ssid, probe_date])
+
+				ap_info_item = QStandardItem("WPA/WPS Info")
+				ap_info_item.setData('AP_INFO', Qt.UserRole)
+
+				ap_info_item.appendRow([QStandardItem("Enc: WPA/WPA2")])
+				ap_info_item.appendRow([QStandardItem("Pair: AES,CCMP")])
+				ap_info_item.appendRow([QStandardItem("AKM: SAE,802.1x")])
+				ap_info_item.appendRow([QStandardItem("WPS: 1.0, Locked")])
+
+				ap_item.appendRow([ap_info_item])
 					
 				self.handshakes_db_tree_model.appendRow(ap_row)
 				#self.tree_view.expandAll()

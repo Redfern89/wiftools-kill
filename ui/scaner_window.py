@@ -118,6 +118,7 @@ class StationsTable(QWidget, Controls):
 				self.sta_table_model.item(row, 2).setText(str(sta_data['frames']))
 				self.sta_table_model.item(row, 3).setText(rate)
 				self.sta_table_model.item(row, 4).setText(channel_flags)
+				self.sta_table_model.item(row, 5).setText(','.join(sta_data['probes']))
 
 	def add_sta(self, sta_addr, sta_data):
 		sta_mac = sta_data['addrs']['client_addr'].lower()
@@ -137,7 +138,7 @@ class StationsTable(QWidget, Controls):
 			row.append(QStandardItem(str(sta_data['frames'])))
 			row.append(QStandardItem(rate))
 			row.append(QStandardItem(channel_flags))
-			row.append(QStandardItem('')) # Probes - заполняется позже
+			row.append(QStandardItem(','.join(sta_data['probes'])))
 				
 			self.sta_table_model.appendRow(row)
 			self.sta_table.setRowHeight(self.sta_table_model.rowCount() -1, 40)
@@ -333,7 +334,7 @@ class ScannerWindow(QMainWindow, Controls):
 			)
 		)
 		self.start_button.setEnabled(True)
-	
+
 	def select_target(self):
 		selected_indexes = self.access_points_table.selectionModel().selectedRows()
 		if selected_indexes and self.interface and not self.running:
@@ -365,7 +366,7 @@ class ScannerWindow(QMainWindow, Controls):
 		self.target_button.setEnabled(True)
 		self.select_adapter_button.setEnabled(True)
 		self.running = False
-		
+
 		if self.signals:
 			self.signals.scanner.stop_signal.emit()
 
@@ -488,6 +489,7 @@ class ScannerWindow(QMainWindow, Controls):
 				self.access_points_table.setRowHeight(row +1, new_height)	
 	
 	def update_sta(self, ap_addr, sta_addr, sta_data):
+		#print(sta_data['probes'])
 		row = self.find_row_by_userrole(
 			baseModel=self.access_points_table_model,
 			col=0,
